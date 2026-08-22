@@ -1,0 +1,368 @@
+﻿@model IEnumerable<ContractorHub.Models.Contract>
+
+@{
+    ViewData["Title"] = "Договоры";
+
+var contracts = Model?.ToList() ?? new List<ContractorHub.Models.Contract>();
+
+    var totalContracts = contracts.Count;
+    var activeContracts = contracts.Count(c => c.Status == "Активен");
+    var pendingContracts = contracts.Count(c => c.Status == "На подписи");
+
+}
+
+<div class="contracts-page">
+
+    <section class="contracts-header">
+
+        <div>
+            <div class="contracts-eyebrow">
+                ДОКУМЕНТЫ
+            </div>
+
+            <h1>Договоры</h1>
+
+            <p>
+                Договоры, сформированные на основании коммерческих предложений.
+            </p>
+        </div>
+
+        <div class="contracts-header-meta">
+
+            <div class="contracts-stat">
+                <span class="contracts-stat-label">ВСЕГО</span>
+                <strong>@totalContracts</strong>
+            </div>
+
+            <div class="contracts-stat">
+                <span class="contracts-stat-label">АКТИВНЫЕ</span>
+                <strong>@activeContracts</strong>
+            </div>
+
+            <div class="contracts-stat">
+                <span class="contracts-stat-label">НА ПОДПИСИ</span>
+                <strong>@pendingContracts</strong>
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="contracts-workflow">
+
+        <div class="contracts-workflow-icon">
+            <i class="fas fa-file-signature"></i>
+        </div>
+
+        <div>
+            <strong>Договор формируется из коммерческого предложения</strong>
+
+            <span>
+                После согласования КП договор появляется здесь автоматически.
+                Отдельно создавать его не требуется.
+            </span>
+        </div>
+
+    </section>
+
+    <section class="contracts-toolbar">
+
+        <form method="get"
+              asp-action="Index"
+              class="contracts-search-form">
+
+            <div class="contracts-search">
+
+                <i class="fas fa-search"></i>
+
+                <input type="text"
+                       name="searchString"
+                       placeholder="Поиск по номеру договора или клиенту..."
+                       value="@ViewContext.HttpContext.Request.Query["searchString"]" />
+
+            </div>
+
+            <button type="submit"
+                    class="contracts-search-button">
+                Найти
+            </button>
+
+            @if (!string.IsNullOrWhiteSpace(ViewContext.HttpContext.Request.Query["searchString"]))
+            {
+                <a asp-action="Index"
+                   class="contracts-reset-button">
+                    Очистить
+                </a>
+            }
+
+        </form>
+
+        <div class="contracts-toolbar-label">
+            <i class="fas fa-layer-group"></i>
+            @totalContracts договор@(totalContracts == 1 ? "" : totalContracts >= 2 && totalContracts <= 4 ? "а" : "ов")
+        </div>
+
+    </section>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="contracts-alert contracts-alert-success">
+            <i class="fas fa-circle-check"></i>
+
+            <span>@TempData["Success"]</span>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="contracts-alert contracts-alert-error">
+            <i class="fas fa-circle-exclamation"></i>
+
+            <span>@TempData["Error"]</span>
+        </div>
+    }
+
+    @if (contracts.Any())
+    {
+        <section class="contracts-table-card">
+
+            <div class="contracts-table-head">
+
+                <div>ДОГОВОР</div>
+                <div>КЛИЕНТ</div>
+                <div>ДАТА</div>
+                <div>СУММА</div>
+                <div>СТАТУС</div>
+                <div>ОСНОВАНИЕ</div>
+                <div></div>
+
+            </div>
+
+
+            @foreach (var contract in contracts)
+            {
+                var statusClass = contract.Status switch
+                {
+                    "Черновик" => "contracts-status-draft",
+                    "На подписи" => "contracts-status-signing",
+                    "Активен" => "contracts-status-active",
+                    "Закрыт" => "contracts-status-closed",
+                    _ => "contracts-status-default"
+                };
+
+                var statusIcon = contract.Status switch
+                {
+                    "Черновик" => "fa-file",
+                    "На подписи" => "fa-pen-nib",
+                    "Активен" => "fa-circle-check",
+                    "Закрыт" => "fa-lock",
+                    _ => "fa-file"
+                };
+
+                <article class="contracts-row">
+
+                    <div class="contracts-cell contracts-cell-contract">
+
+                        <span class="contracts-cell-label">
+                            ДОГОВОР
+                        </span>
+
+                        <strong>
+                            №@contract.ContractNumber
+                        </strong>
+
+                        @if (contract.SignedDate.HasValue)
+                        {
+                            <span class="contracts-signed">
+                                <i class="fas fa-check"></i>
+                                подписан @contract.SignedDate.Value.ToShortDateString()
+                            </span>
+                        }
+
+                    </div>
+
+                    <div class="contracts-cell contracts-cell-client">
+
+                        <span class="contracts-cell-label">
+                            КЛИЕНТ
+                        </span>
+
+                        <strong>
+                            @(contract.Client?.Name ?? "Клиент не указан")
+                        </strong>
+
+                    </div>
+
+                    <div class="contracts-cell">
+
+                        <span class="contracts-cell-label">
+                            ДАТА
+                        </span>
+
+                        <span>
+                            @contract.Date.ToShortDateString()
+                        </span>
+
+                    </div>
+
+                    <div class="contracts-cell contracts-cell-amount">
+
+                        <span class="contracts-cell-label">
+                            СУММА
+                        </span>
+
+                        <strong>
+                            @contract.TotalAmount.ToString("N2")
+                            <small>₽</small>
+                        </strong>
+
+                    </div>
+
+                    <div class="contracts-cell">
+
+                        <span class="contracts-cell-label">
+                            СТАТУС
+                        </span>
+
+                        <form method="post"
+                              asp-controller="Contracts"
+                              asp-action="ChangeStatus"
+                              class="contracts-status-form">
+
+                            <input type="hidden"
+                                   name="id"
+                                   value="@contract.Id" />
+
+                            <div class="contracts-status-wrap @statusClass">
+
+                                <i class="fas @statusIcon"></i>
+
+                                <select name="status"
+                                        onchange="this.form.submit()"
+                                        aria-label="Изменить статус договора">
+
+                                    <option value="Черновик" selected="@(contract.Status == "Черновик")">
+                                        Черновик
+                                    </option>
+
+                                    <option value="На подписи" selected="@(contract.Status == "На подписи")">
+                                        На подписи
+                                    </option>
+
+                                    <option value="Активен" selected="@(contract.Status == "Активен")">
+                                        Активен
+                                    </option>
+
+                                    <option value="Закрыт" selected="@(contract.Status == "Закрыт")">
+                                        Закрыт
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                    <div class="contracts-cell contracts-cell-offer">
+
+                        <span class="contracts-cell-label">
+                            ОСНОВАНИЕ
+                        </span>
+
+                        @if (contract.CommercialOffer != null)
+                        {
+                            <span class="contracts-offer">
+                                <i class="fas fa-file-lines"></i>
+                                КП №@contract.CommercialOffer.OfferNumber
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="contracts-empty-value">
+                                —
+                            </span>
+                        }
+
+                    </div>
+
+                    <div class="contracts-cell contracts-cell-actions">
+
+                        <a asp-controller="Contracts"
+                           asp-action="DownloadContract"
+                           asp-route-id="@contract.Id"
+                           class="contracts-action contracts-action-pdf"
+                           title="Скачать PDF">
+
+                            <i class="fas fa-file-pdf"></i>
+
+                            <span>PDF</span>
+
+                        </a>
+
+
+                        @if (contract.Status == "Закрыт")
+                        {
+                            <form method="post"
+                                  asp-controller="Contracts"
+                                  asp-action="Delete"
+                                  class="contracts-delete-form">
+
+                                <input type="hidden"
+                                       name="id"
+                                       value="@contract.Id" />
+
+                                <button type="submit"
+                                        class="contracts-action contracts-action-delete"
+                                        onclick="return confirm('Удалить договор №@contract.ContractNumber?')"
+                                        title="Удалить закрытый договор">
+
+                                    <i class="fas fa-trash"></i>
+
+                                </button>
+
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="contracts-action contracts-action-locked"
+                                  title="Удаление доступно только для закрытых договоров">
+
+                                <i class="fas fa-lock"></i>
+
+                            </span>
+                        }
+
+                    </div>
+
+                </article>
+            }
+
+        </section>
+    }
+    else
+    {
+        <section class="contracts-empty">
+
+            <div class="contracts-empty-icon">
+                <i class="fas fa-file-contract"></i>
+            </div>
+
+            <div>
+                <div class="contracts-empty-eyebrow">
+                    РЕЕСТР ПУСТ
+                </div>
+
+                <h2>Договоров пока нет</h2>
+
+                <p>
+                    Создайте и согласуйте коммерческое предложение —
+                    после формирования договора он автоматически появится здесь.
+                </p>
+            </div>
+
+        </section>
+    }
+
+</div>

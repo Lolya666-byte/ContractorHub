@@ -1,0 +1,253 @@
+﻿@{
+    ViewData["Title"] = "Рабочий стол";
+}
+
+<div class="hub-home">
+
+    <section class="hub-hero">
+        <div>
+            <div class="hub-eyebrow">
+                <span class="hub-status-dot"></span>
+                Contractor Hub
+            </div>
+
+            <h1>Рабочий стол</h1>
+
+            <p>
+                Всё необходимое для работы с клиентами, коммерческими предложениями,
+                товарами и договорами — в одном месте.
+            </p>
+        </div>
+
+        <div class="hub-hero-meta">
+            <span>Система активна</span>
+            <strong>@DateTime.Now.ToString("dd.MM.yyyy")</strong>
+        </div>
+    </section>
+
+    <section class="hub-section">
+
+        <div class="hub-section-heading">
+            <div>
+                <span class="hub-section-kicker">ОБЗОР</span>
+                <h2>Основные показатели</h2>
+            </div>
+        </div>
+
+        <div class="hub-stats">
+
+            <a asp-controller="Clients"
+               asp-action="Index"
+               class="hub-stat">
+                <div class="hub-stat-top">
+                    <span class="hub-stat-label">Клиенты</span>
+                    <span class="hub-stat-icon">
+                        <i class="fas fa-users"></i>
+                    </span>
+                </div>
+
+                <div class="hub-stat-value">@ViewBag.ClientCount</div>
+
+                <div class="hub-stat-bottom">
+                    <span>Клиентская база</span>
+                    <i class="fas fa-arrow-up-right-from-square"></i>
+                </div>
+            </a>
+
+
+            <a asp-controller="Products"
+               asp-action="Index"
+               class="hub-stat">
+                <div class="hub-stat-top">
+                    <span class="hub-stat-label">Товары</span>
+                    <span class="hub-stat-icon">
+                        <i class="fas fa-box"></i>
+                    </span>
+                </div>
+
+                <div class="hub-stat-value">@ViewBag.ProductCount</div>
+
+                <div class="hub-stat-bottom">
+                    <span>Каталог продукции</span>
+                    <i class="fas fa-arrow-up-right-from-square"></i>
+                </div>
+            </a>
+
+
+            <a asp-controller="CommercialOffers"
+               asp-action="Index"
+               class="hub-stat">
+                <div class="hub-stat-top">
+                    <span class="hub-stat-label">Коммерческие предложения</span>
+                    <span class="hub-stat-icon">
+                        <i class="fas fa-file-lines"></i>
+                    </span>
+                </div>
+
+                <div class="hub-stat-value">@ViewBag.OfferCount</div>
+
+                <div class="hub-stat-bottom">
+                    <span>Документы</span>
+                    <i class="fas fa-arrow-up-right-from-square"></i>
+                </div>
+            </a>
+
+
+            <a asp-controller="Contracts"
+               asp-action="Index"
+               class="hub-stat">
+                <div class="hub-stat-top">
+                    <span class="hub-stat-label">Договоры</span>
+                    <span class="hub-stat-icon">
+                        <i class="fas fa-file-contract"></i>
+                    </span>
+                </div>
+
+                <div class="hub-stat-value">@ViewBag.ContractCount</div>
+
+                <div class="hub-stat-bottom">
+                    <span>Договорная база</span>
+                    <i class="fas fa-arrow-up-right-from-square"></i>
+                </div>
+            </a>
+
+        </div>
+    </section>
+
+    <section class="hub-main-grid">
+
+        <div class="hub-panel hub-actions-panel">
+
+            <div class="hub-panel-header">
+                <div>
+                    <span class="hub-section-kicker">ДЕЙСТВИЯ</span>
+                    <h2>Быстрый доступ</h2>
+                </div>
+
+                <span class="hub-panel-number">01</span>
+            </div>
+
+            <div class="hub-actions">
+
+                <a asp-controller="Clients"
+                   asp-action="Create"
+                   class="hub-action">
+                    <span class="hub-action-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </span>
+
+                    <span>
+                        <strong>Новый клиент</strong>
+                        <small>Добавить компанию в базу</small>
+                    </span>
+
+                    <i class="fas fa-arrow-right hub-action-arrow"></i>
+                </a>
+
+
+                <a asp-controller="Products"
+                   asp-action="Create"
+                   class="hub-action">
+                    <span class="hub-action-icon">
+                        <i class="fas fa-box-open"></i>
+                    </span>
+
+                    <span>
+                        <strong>Новый товар</strong>
+                        <small>Добавить позицию в каталог</small>
+                    </span>
+
+                    <i class="fas fa-arrow-right hub-action-arrow"></i>
+                </a>
+
+
+                <a asp-controller="CommercialOffers"
+                   asp-action="Create"
+                   class="hub-action">
+                    <span class="hub-action-icon">
+                        <i class="fas fa-file-circle-plus"></i>
+                    </span>
+
+                    <span>
+                        <strong>Новое КП</strong>
+                        <small>Создать коммерческое предложение</small>
+                    </span>
+
+                    <i class="fas fa-arrow-right hub-action-arrow"></i>
+                </a>
+
+            </div>
+        </div>
+        <div class="hub-panel hub-system-panel">
+
+            <div class="hub-panel-header">
+                <div>
+                    <span class="hub-section-kicker">СИСТЕМА</span>
+                    <h2>Состояние</h2>
+                </div>
+
+                <span class="hub-system-indicator">
+                    <span></span>
+                    Онлайн
+                </span>
+            </div>
+
+
+            <div class="hub-system-list">
+
+                <div class="hub-system-row">
+                    <div class="hub-system-label">
+                        <span class="hub-system-dot"></span>
+                        Клиенты
+                    </div>
+
+                    <strong>@ViewBag.ClientCount</strong>
+                </div>
+
+
+                <div class="hub-system-row">
+                    <div class="hub-system-label">
+                        <span class="hub-system-dot"></span>
+                        Товары
+                    </div>
+
+                    <strong>@ViewBag.ProductCount</strong>
+                </div>
+
+
+                <div class="hub-system-row">
+                    <div class="hub-system-label">
+                        <span class="hub-system-dot"></span>
+                        КП
+                    </div>
+
+                    <strong>@ViewBag.OfferCount</strong>
+                </div>
+
+
+                <div class="hub-system-row">
+                    <div class="hub-system-label">
+                        <span class="hub-system-dot"></span>
+                        Договоры
+                    </div>
+
+                    <strong>@ViewBag.ContractCount</strong>
+                </div>
+
+            </div>
+
+
+            <div class="hub-system-footer">
+                <span>Последнее обновление</span>
+                <strong>@DateTime.Now.ToString("HH:mm")</strong>
+            </div>
+
+        </div>
+
+    </section>
+    <div class="hub-footer-note">
+        <span>Contractor Hub</span>
+        <span>Рабочая панель управления</span>
+    </div>
+
+</div>

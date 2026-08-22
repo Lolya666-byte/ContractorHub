@@ -1,0 +1,445 @@
+﻿@model IEnumerable<ContractorHub.Models.Client>
+
+@{
+    ViewData["Title"] = "Клиенты";
+
+    var clients = Model?.ToList() ?? new List<ContractorHub.Models.Client>();
+    var searchString = ViewContext.HttpContext.Request.Query["searchString"].ToString();
+
+    string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "?";
+
+        var parts = name
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length == 1)
+            return parts[0].Length >= 2
+                ? parts[0].Substring(0, 2).ToUpper()
+                : parts[0].ToUpper();
+
+        return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
+    }
+}
+
+<div class="clients-page">
+
+    <section class="clients-header">
+
+        <div>
+            <div class="clients-eyebrow">
+                КЛИЕНТСКАЯ БАЗА
+            </div>
+
+            <div class="clients-title-row">
+                <h1>Клиенты</h1>
+
+                <span class="clients-count-badge">
+                    @clients.Count
+                </span>
+            </div>
+
+            <p>
+                Управление компаниями и контактными лицами.
+            </p>
+        </div>
+
+
+        <a asp-controller="Clients"
+           asp-action="Create"
+           class="clients-create-button">
+
+            <i class="fas fa-plus"></i>
+
+            <span>Новый клиент</span>
+
+        </a>
+
+    </section>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="hub-notice hub-notice-success">
+
+            <span class="hub-notice-icon">
+                <i class="fas fa-check"></i>
+            </span>
+
+            <span>@TempData["Success"]</span>
+
+            <button type="button"
+                    class="hub-notice-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Закрыть">
+                <i class="fas fa-xmark"></i>
+            </button>
+
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="hub-notice hub-notice-error">
+
+            <span class="hub-notice-icon">
+                <i class="fas fa-exclamation"></i>
+            </span>
+
+            <span>@TempData["Error"]</span>
+
+            <button type="button"
+                    class="hub-notice-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Закрыть">
+                <i class="fas fa-xmark"></i>
+            </button>
+
+        </div>
+    }
+
+    <section class="clients-toolbar">
+
+        <form method="get"
+              asp-action="Index"
+              class="clients-search-form">
+
+            <div class="clients-search">
+
+                <i class="fas fa-magnifying-glass"></i>
+
+                <input type="text"
+                       name="searchString"
+                       value="@searchString"
+                       placeholder="Поиск по названию, ИНН, контакту или телефону..."
+                       autocomplete="off" />
+
+                @if (!string.IsNullOrWhiteSpace(searchString))
+                {
+                    <a asp-action="Index"
+                       class="clients-search-clear"
+                       title="Очистить поиск">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </a>
+                }
+
+            </div>
+
+            <button type="submit"
+                    class="clients-search-button">
+                Найти
+            </button>
+
+            @if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                <a asp-action="Index"
+                   class="clients-reset-button">
+                    Сбросить
+                </a>
+            }
+
+        </form>
+
+
+        <div class="clients-toolbar-meta">
+
+            @if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                <span>
+                    Результаты поиска:
+                    <strong>@clients.Count</strong>
+                </span>
+            }
+            else
+            {
+                <span>
+                    Всего:
+                    <strong>@clients.Count</strong>
+                </span>
+            }
+
+        </div>
+
+    </section>
+
+    <section class="clients-table-card">
+
+        @if (clients.Any())
+        {
+            <div class="clients-table-wrapper">
+
+                <table class="clients-table">
+
+                    <thead>
+                        <tr>
+                            <th class="clients-company-column">
+                                Компания
+                            </th>
+
+                            <th>
+                                Контактное лицо
+                            </th>
+
+                            <th>
+                                Контакты
+                            </th>
+
+                            <th>
+                                Добавлен
+                            </th>
+
+                            <th class="clients-actions-column">
+                            </th>
+                        </tr>
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach (var client in clients)
+                        {
+                            <tr>
+
+                                <td>
+
+                                    <div class="client-company">
+
+                                        <div class="client-avatar">
+                                            @GetInitials(client.Name)
+                                        </div>
+
+                                        <div class="client-company-info">
+
+                                            <strong>
+                                                @client.Name
+                                            </strong>
+
+                                            @if (!string.IsNullOrWhiteSpace(client.Inn))
+                                            {
+                                                <span>
+                                                    ИНН @client.Inn
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="client-muted">
+                                                    ИНН не указан
+                                                </span>
+                                            }
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+
+                                    @if (!string.IsNullOrWhiteSpace(client.ContactPerson))
+                                    {
+                                        <div class="client-primary-text">
+                                            @client.ContactPerson
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="client-empty-value">
+                                            Не указан
+                                        </div>
+                                    }
+
+                                </td>
+
+                                <td>
+
+                                    <div class="client-contact-list">
+
+                                        @if (!string.IsNullOrWhiteSpace(client.Phone))
+                                        {
+                                            <a href="tel:@client.Phone"
+                                               class="client-contact-item">
+
+                                                <i class="fas fa-phone"></i>
+
+                                                <span>
+                                                    @client.Phone
+                                                </span>
+
+                                            </a>
+                                        }
+
+                                        @if (!string.IsNullOrWhiteSpace(client.Email))
+                                        {
+                                            <a href="mailto:@client.Email"
+                                               class="client-contact-item">
+
+                                                <i class="fas fa-envelope"></i>
+
+                                                <span>
+                                                    @client.Email
+                                                </span>
+
+                                            </a>
+                                        }
+
+                                        @if (string.IsNullOrWhiteSpace(client.Phone)
+                                                                        && string.IsNullOrWhiteSpace(client.Email))
+                                        {
+                                            <span class="client-empty-value">
+                                                Нет данных
+                                            </span>
+                                        }
+
+                                    </div>
+
+                                </td>
+
+                                <td>
+
+                                    <div class="client-date">
+
+                                        <strong>
+                                            @client.CreatedAt.ToString("dd.MM.yy")
+                                        </strong>
+
+                                        <span>
+                                            @client.CreatedAt.ToString("HH:mm")
+                                        </span>
+
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+
+                                    <div class="client-actions">
+
+                                        <a asp-controller="Clients"
+                                           asp-action="Edit"
+                                           asp-route-id="@client.Id"
+                                           class="client-action-button"
+                                           title="Редактировать">
+
+                                            <i class="fas fa-pen"></i>
+
+                                        </a>
+
+
+                                        <div class="dropdown">
+
+                                            <button type="button"
+                                                    class="client-action-button"
+                                                    data-bs-toggle="dropdown"
+                                                    aria-expanded="false"
+                                                    title="Дополнительно">
+
+                                                <i class="fas fa-ellipsis"></i>
+
+                                            </button>
+
+
+                                            <ul class="dropdown-menu dropdown-menu-end client-dropdown">
+
+                                                <li class="client-dropdown-title">
+                                                    Действия
+                                                </li>
+
+                                                <li>
+                                                    <a class="dropdown-item"
+                                                       asp-controller="Clients"
+                                                       asp-action="Edit"
+                                                       asp-route-id="@client.Id">
+
+                                                        <i class="fas fa-pen"></i>
+                                                        Редактировать
+
+                                                    </a>
+                                                </li>
+
+                                                <li>
+                                                    <form method="post"
+                                                          asp-controller="Clients"
+                                                          asp-action="Delete">
+
+                                                        <input type="hidden"
+                                                               name="id"
+                                                               value="@client.Id" />
+
+                                                        <button type="submit"
+                                                                class="dropdown-item client-delete-item"
+                                                                onclick="return confirm('Удалить клиента «@client.Name»? Все связанные КП и договоры также будут удалены.');">
+
+                                                            <i class="fas fa-trash"></i>
+                                                            Удалить
+
+                                                        </button>
+
+                                                    </form>
+                                                </li>
+
+                                            </ul>
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        }
+        else
+        {
+            <div class="clients-empty">
+
+                <div class="clients-empty-icon">
+                    <i class="fas fa-users-slash"></i>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(searchString))
+                {
+                    <h2>Ничего не найдено</h2>
+
+                    <p>
+                        По запросу
+                        <strong>«@searchString»</strong>
+                        клиентов не найдено.
+                    </p>
+
+                    <a asp-action="Index"
+                       class="clients-empty-button">
+                        Сбросить поиск
+                    </a>
+                }
+                else
+                {
+                    <h2>Клиентов пока нет</h2>
+
+                    <p>
+                        Добавьте первую компанию, чтобы начать работу с клиентской базой.
+                    </p>
+
+                    <a asp-controller="Clients"
+                       asp-action="Create"
+                       class="clients-empty-button">
+                        <i class="fas fa-plus"></i>
+                        Добавить клиента
+                    </a>
+                }
+
+            </div>
+        }
+
+    </section>
+
+</div>

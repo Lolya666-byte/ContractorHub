@@ -1,0 +1,286 @@
+﻿@model ContractorHub.Models.Client
+
+@{
+    ViewData["Title"] = "Новый клиент";
+}
+
+<div class="client-form-page">
+
+    <section class="client-form-header">
+
+        <div>
+            <div class="client-form-eyebrow">
+                КЛИЕНТСКАЯ БАЗА
+            </div>
+
+            <h1>Новый клиент</h1>
+
+            <p>
+                Добавьте компанию и основные контактные данные.
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="client-form-back">
+            <i class="fas fa-arrow-left"></i>
+            К клиентам
+        </a>
+
+    </section>
+
+
+    <section class="client-form-layout">
+
+        <form method="post"
+              class="client-form-card">
+
+            <div class="client-form-section">
+
+                <div class="client-form-section-header">
+
+                    <div>
+                        <span class="client-form-kicker">01</span>
+                        <h2>Компания</h2>
+                    </div>
+
+                    <i class="fas fa-building client-form-section-icon"></i>
+
+                </div>
+
+
+                <div class="client-form-field client-form-field-wide">
+
+                    <label asp-for="Name">
+                        Название компании
+                        <span class="client-required">*</span>
+                    </label>
+
+                    <input asp-for="Name"
+                           class="client-input"
+                           placeholder="Например, ООО «Вектор»"
+                           autocomplete="organization"
+                           autofocus />
+
+                    <span asp-validation-for="Name"
+                          class="client-validation"></span>
+
+                </div>
+
+
+                <div class="client-form-field">
+
+                    <label asp-for="Inn">
+                        ИНН
+                    </label>
+
+                    <input asp-for="Inn"
+                           class="client-input"
+                           placeholder="7701234567"
+                           inputmode="numeric" />
+
+                    <span class="client-field-hint">
+                        10 или 12 цифр, без пробелов и тире.
+                    </span>
+
+                    <span asp-validation-for="Inn"
+                          class="client-validation"></span>
+
+                </div>
+
+            </div>
+
+
+            <div class="client-form-section">
+
+                <div class="client-form-section-header">
+
+                    <div>
+                        <span class="client-form-kicker">02</span>
+                        <h2>Контактное лицо</h2>
+                    </div>
+
+                    <i class="fas fa-user client-form-section-icon"></i>
+
+                </div>
+
+
+                <div class="client-form-grid">
+
+                    <div class="client-form-field">
+
+                        <label asp-for="ContactPerson">
+                            Имя и фамилия
+                        </label>
+
+                        <input asp-for="ContactPerson"
+                               class="client-input"
+                               placeholder="Иван Петров"
+                               autocomplete="name" />
+
+                        <span asp-validation-for="ContactPerson"
+                              class="client-validation"></span>
+
+                    </div>
+
+
+                    <div class="client-form-field">
+
+                        <label asp-for="Phone">
+                            Телефон
+                        </label>
+
+                        <input asp-for="Phone"
+                               class="client-input"
+                               placeholder="+79991234567"
+                               inputmode="tel"
+                               autocomplete="tel" />
+
+                        <span class="client-field-hint">
+                            89991234567 или +79991234567
+                        </span>
+
+                        <span asp-validation-for="Phone"
+                              class="client-validation"></span>
+
+                    </div>
+
+
+                    <div class="client-form-field client-form-field-wide">
+
+                        <label asp-for="Email">
+                            Email
+                        </label>
+
+                        <input asp-for="Email"
+                               type="email"
+                               class="client-input"
+                               placeholder="client@example.com"
+                               autocomplete="email" />
+
+                        <span asp-validation-for="Email"
+                              class="client-validation"></span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="client-form-section">
+
+                <div class="client-form-section-header">
+
+                    <div>
+                        <span class="client-form-kicker">03</span>
+                        <h2>Адрес</h2>
+                    </div>
+
+                    <i class="fas fa-location-dot client-form-section-icon"></i>
+
+                </div>
+
+
+                <div class="client-form-field">
+
+                    <label asp-for="Address">
+                        Юридический или рабочий адрес
+                    </label>
+
+                    <input asp-for="Address"
+                           class="client-input"
+                           placeholder="г. Москва, ул. Примерная, д. 10"
+                           autocomplete="street-address" />
+
+                    <span asp-validation-for="Address"
+                          class="client-validation"></span>
+
+                </div>
+
+            </div>
+
+            <div class="client-form-actions">
+
+                <a asp-action="Index"
+                   class="client-form-cancel">
+                    Отмена
+                </a>
+
+                <button type="submit"
+                        class="client-form-submit">
+
+                    <i class="fas fa-check"></i>
+
+                    Создать клиента
+
+                </button>
+
+            </div>
+
+        </form>
+
+        <aside class="client-form-aside">
+
+            <div class="client-form-info">
+
+                <span class="client-form-info-kicker">
+                    НОВЫЙ КЛИЕНТ
+                </span>
+
+                <h2>
+                    Основные данные
+                </h2>
+
+                <p>
+                    После сохранения компания появится в клиентской базе и будет доступна
+                    при работе с коммерческими предложениями и договорами.
+                </p>
+
+            </div>
+
+
+            <div class="client-form-check">
+
+                <div class="client-form-check-icon">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+
+                <div>
+                    <strong>Проверка данных</strong>
+
+                    <span>
+                        ИНН проверяется на корректность и уникальность.
+                    </span>
+                </div>
+
+            </div>
+
+
+            <div class="client-form-check">
+
+                <div class="client-form-check-icon">
+                    <i class="fas fa-lock"></i>
+                </div>
+
+                <div>
+                    <strong>Безопасное сохранение</strong>
+
+                    <span>
+                        Данные сохраняются только после успешной валидации формы.
+                    </span>
+                </div>
+
+            </div>
+
+        </aside>
+
+    </section>
+
+</div>
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,514 @@
+﻿@model IEnumerable<ContractorHub.Models.CommercialOffer>
+
+@{
+    ViewData["Title"] = "Коммерческие предложения";
+
+    var offers = Model?.ToList() ?? new List<ContractorHub.Models.CommercialOffer>();
+    var searchString = ViewContext.HttpContext.Request.Query["searchString"].ToString();
+
+    string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Черновик" => "offer-status-draft",
+            "Отправлено" => "offer-status-sent",
+            "Согласовано" => "offer-status-approved",
+            _ => "offer-status-default"
+        };
+    }
+}
+
+<div class="offers-page">
+
+    <section class="offers-header">
+
+        <div>
+            <div class="offers-eyebrow">
+                ДОКУМЕНТЫ / КП
+            </div>
+
+            <div class="offers-title-row">
+                <h1>Коммерческие предложения</h1>
+
+                <span class="offers-count-badge">
+                    @offers.Count
+                </span>
+            </div>
+
+            <p>
+                Создание, отправка и согласование коммерческих предложений.
+            </p>
+        </div>
+
+
+        <a asp-controller="CommercialOffers"
+           asp-action="Create"
+           class="offers-create-button">
+
+            <i class="fas fa-plus"></i>
+            Новое КП
+
+        </a>
+
+    </section>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="hub-notice hub-notice-success">
+
+            <span class="hub-notice-icon">
+                <i class="fas fa-check"></i>
+            </span>
+
+            <span>@TempData["Success"]</span>
+
+            <button type="button"
+                    class="hub-notice-close"
+                    data-bs-dismiss="alert">
+                <i class="fas fa-xmark"></i>
+            </button>
+
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="hub-notice hub-notice-error">
+
+            <span class="hub-notice-icon">
+                <i class="fas fa-exclamation"></i>
+            </span>
+
+            <span>@TempData["Error"]</span>
+
+            <button type="button"
+                    class="hub-notice-close"
+                    data-bs-dismiss="alert">
+                <i class="fas fa-xmark"></i>
+            </button>
+
+        </div>
+    }
+
+    <section class="offers-toolbar">
+
+        <form method="get"
+              asp-action="Index"
+              class="offers-search-form">
+
+            <div class="offers-search">
+
+                <i class="fas fa-magnifying-glass"></i>
+
+                <input type="text"
+                       name="searchString"
+                       value="@searchString"
+                       placeholder="Поиск по номеру КП или клиенту..."
+                       autocomplete="off" />
+
+                @if (!string.IsNullOrWhiteSpace(searchString))
+                {
+                    <a asp-action="Index"
+                       class="offers-search-clear">
+                        <i class="fas fa-xmark"></i>
+                    </a>
+                }
+
+            </div>
+
+            <button type="submit"
+                    class="offers-search-button">
+                Найти
+            </button>
+
+            @if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                <a asp-action="Index"
+                   class="offers-reset-button">
+                    Сбросить
+                </a>
+            }
+
+        </form>
+
+
+        <div class="offers-toolbar-meta">
+
+            @if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                <span>
+                    Результаты:
+                    <strong>@offers.Count</strong>
+                </span>
+            }
+            else
+            {
+                <span>
+                    Всего:
+                    <strong>@offers.Count</strong>
+                </span>
+            }
+
+        </div>
+
+    </section>
+
+    <section class="offers-list-card">
+
+        @if (offers.Any())
+        {
+            <div class="offers-table-wrapper">
+
+                <table class="offers-table">
+
+                    <thead>
+                        <tr>
+                            <th>КП</th>
+                            <th>Клиент</th>
+                            <th>Сумма</th>
+                            <th>Статус</th>
+                            <th>Создано</th>
+                            <th>Позиции</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var offer in offers)
+                        {
+                            var hasContract =
+                            ViewBag.HasContractMap != null
+                            && ViewBag.HasContractMap.ContainsKey(offer.Id)
+                            && ViewBag.HasContractMap[offer.Id];
+
+                            <tr>
+
+                                <td>
+
+                                    <div class="offer-number-cell">
+
+                                        <div class="offer-document-icon">
+                                            <i class="fas fa-file-lines"></i>
+                                        </div>
+
+                                        <div>
+                                            <strong>
+                                                № @offer.OfferNumber
+                                            </strong>
+
+                                            <span>
+                                                Коммерческое предложение
+                                            </span>
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+                                <td>
+
+                                    <div class="offer-client-cell">
+
+                                        <strong>
+                                            @(offer.Client?.Name ?? "Клиент не указан")
+                                        </strong>
+
+                                        @if (offer.Client != null &&
+                                                                        !string.IsNullOrWhiteSpace(offer.Client.ContactPerson))
+                                        {
+                                            <span>
+                                                @offer.Client.ContactPerson
+                                            </span>
+                                        }
+
+                                    </div>
+
+                                </td>
+
+                                <td>
+
+                                    <div class="offer-total-cell">
+
+                                        <strong>
+                                            @offer.TotalAmount.ToString("N2") ₽
+                                        </strong>
+
+                                        <span>
+                                            @offer.Items?.Count позици@(offer.Items?.Count == 1 ? "я" : "й")
+                                        </span>
+
+                                    </div>
+
+                                </td>
+
+                                <td>
+
+                                    <span class="offer-status @GetStatusClass(offer.Status)">
+                                        <span></span>
+                                        @offer.Status
+                                    </span>
+
+                                </td>
+
+                                <td>
+
+                                    <div class="offer-date-cell">
+
+                                        <strong>
+                                            @offer.Date.ToString("dd.MM.yy")
+                                        </strong>
+
+                                        <span>
+                                            @offer.Date.ToString("HH:mm")
+                                        </span>
+
+                                    </div>
+
+                                </td>
+
+                                <td>
+
+                                    <span class="offer-items-count">
+                                        @(offer.Items?.Count ?? 0)
+                                    </span>
+
+                                </td>
+
+                                <td>
+
+                                    <div class="offer-actions">
+
+                                        @if (offer.Status != "Согласовано")
+                                        {
+                                            <a asp-controller="CommercialOffers"
+                                               asp-action="Edit"
+                                               asp-route-id="@offer.Id"
+                                               class="offer-action-button"
+                                               title="Редактировать">
+
+                                                <i class="fas fa-pen"></i>
+
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="offer-action-locked"
+                                                  title="Согласованное КП нельзя редактировать">
+
+                                                <i class="fas fa-lock"></i>
+
+                                            </span>
+                                        }
+
+
+                                        <div class="dropdown">
+
+                                            <button type="button"
+                                                    class="offer-action-button"
+                                                    data-bs-toggle="dropdown"
+                                                    aria-expanded="false"
+                                                    title="Действия">
+
+                                                <i class="fas fa-ellipsis"></i>
+
+                                            </button>
+
+
+                                            <ul class="dropdown-menu dropdown-menu-end offer-dropdown">
+
+                                                <li class="offer-dropdown-title">
+                                                    Действия с КП
+                                                </li>
+
+
+                                                @if (offer.Status != "Согласовано")
+                                                {
+                                                    <li>
+                                                        <a class="dropdown-item"
+                                                           asp-controller="CommercialOffers"
+                                                           asp-action="Edit"
+                                                           asp-route-id="@offer.Id">
+
+                                                            <i class="fas fa-pen"></i>
+                                                            Редактировать
+
+                                                        </a>
+                                                    </li>
+                                                }
+
+
+                                                <li class="offer-status-menu">
+
+                                                    <span class="offer-dropdown-label">
+                                                        Изменить статус
+                                                    </span>
+
+                                                    <form method="post"
+                                                          asp-controller="CommercialOffers"
+                                                          asp-action="ChangeStatus">
+
+                                                        <input type="hidden"
+                                                               name="id"
+                                                               value="@offer.Id" />
+
+                                                        <select name="status"
+                                                                class="offer-status-select"
+                                                                onchange="this.form.submit()"
+                                                                @(offer.Status == "Согласовано" ? "disabled" : "")>
+
+                                                            <option value="Черновик"
+                                                                    selected="@(offer.Status == "Черновик")">
+                                                                Черновик
+                                                            </option>
+
+                                                            <option value="Отправлено"
+                                                                    selected="@(offer.Status == "Отправлено")">
+                                                                Отправлено
+                                                            </option>
+
+                                                            @if (offer.Status == "Согласовано")
+                                                            {
+                                                                <option value="Согласовано"
+                                                                        selected="selected">
+                                                                    Согласовано
+                                                                </option>
+                                                            }
+
+                                                        </select>
+
+                                                    </form>
+
+                                                </li>
+
+
+                                                @if (offer.Status == "Отправлено")
+                                                {
+                                                    <li>
+                                                        <form method="post"
+                                                              asp-controller="Contracts"
+                                                              asp-action="CreateFromOffer">
+
+                                                            <input type="hidden"
+                                                                   name="offerId"
+                                                                   value="@offer.Id" />
+
+                                                            <button type="submit"
+                                                                    class="dropdown-item">
+
+                                                                <i class="fas fa-file-signature"></i>
+                                                                Создать договор
+
+                                                            </button>
+
+                                                        </form>
+                                                    </li>
+                                                }
+
+
+                                                @if (offer.Status == "Согласовано")
+                                                {
+                                                    <li class="offer-dropdown-note">
+
+                                                        <i class="fas fa-circle-check"></i>
+
+                                                        @if (hasContract)
+                                                        {
+                                                            <span>Договор создан</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>КП согласовано</span>
+                                                        }
+
+                                                    </li>
+                                                }
+
+
+                                                @if (offer.Status == "Согласовано" && !hasContract)
+                                                {
+                                                    <li>
+
+                                                        <form method="post"
+                                                              asp-controller="CommercialOffers"
+                                                              asp-action="ResetStatus">
+
+                                                            <input type="hidden"
+                                                                   name="id"
+                                                                   value="@offer.Id" />
+
+                                                            <button type="submit"
+                                                                    class="dropdown-item offer-reset-item"
+                                                                    onclick="return confirm('Сбросить статус КП на «Отправлено»? Это действие необратимо!');">
+
+                                                                <i class="fas fa-rotate-left"></i>
+                                                                Аварийный сброс статуса
+
+                                                            </button>
+
+                                                        </form>
+
+                                                    </li>
+                                                }
+
+                                            </ul>
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        }
+        else
+        {
+            <div class="offers-empty">
+
+                <div class="offers-empty-icon">
+                    <i class="fas fa-file-circle-xmark"></i>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(searchString))
+                {
+                    <h2>КП не найдены</h2>
+
+                    <p>
+                        По запросу
+                        <strong>«@searchString»</strong>
+                        ничего не найдено.
+                    </p>
+
+                    <a asp-action="Index"
+                       class="offers-empty-button">
+                        Сбросить поиск
+                    </a>
+                }
+                else
+                {
+                    <h2>Коммерческих предложений пока нет</h2>
+
+                    <p>
+                        Создайте первое КП, чтобы начать работу с продажами.
+                    </p>
+
+                    <a asp-action="Create"
+                       class="offers-empty-button">
+                        <i class="fas fa-plus"></i>
+                        Создать первое КП
+                    </a>
+                }
+
+            </div>
+        }
+
+    </section>
+
+</div>

@@ -1,0 +1,515 @@
+﻿@model ContractorHub.Models.CommercialOfferViewModel
+
+@{
+    ViewData["Title"] = "Создание КП";
+
+    var clients = ViewBag.Clients as List<ContractorHub.Models.Client>;
+    var products = ViewBag.Products as List<ContractorHub.Models.Product>;
+}
+
+<div class="offer-form-page">
+
+    <section class="offer-form-header">
+
+        <div>
+            <div class="offer-form-eyebrow">
+                КОММЕРЧЕСКИЕ ПРЕДЛОЖЕНИЯ
+            </div>
+
+            <h1>Новое КП</h1>
+
+            <p>
+                Сформируйте предложение для клиента и добавьте необходимые позиции.
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="offer-form-back">
+
+            <i class="fas fa-arrow-left"></i>
+            К списку КП
+
+        </a>
+
+    </section>
+
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="hub-notice hub-notice-error">
+
+            <span class="hub-notice-icon">
+                <i class="fas fa-exclamation"></i>
+            </span>
+
+            <span>@TempData["Error"]</span>
+
+        </div>
+    }
+
+
+    <form method="post"
+          asp-action="Create"
+          class="offer-builder"
+          id="offer-form">
+
+        <input type="hidden"
+               name="OfferNumber"
+               value="АВТОМАТИЧЕСКИ" />
+
+
+        <div class="offer-builder-main">
+
+            <section class="offer-builder-card">
+
+                <div class="offer-builder-card-header">
+
+                    <div>
+                        <span class="offer-builder-kicker">01</span>
+                        <h2>Получатель предложения</h2>
+                    </div>
+
+                    <span class="offer-builder-icon">
+                        <i class="fas fa-building"></i>
+                    </span>
+
+                </div>
+
+
+                <div class="offer-form-field">
+
+                    <label for="ClientId">
+                        Клиент
+                        <span>*</span>
+                    </label>
+
+                    <select id="ClientId"
+                            name="ClientId"
+                            class="offer-input"
+                            required>
+
+                        <option value="">
+                            Выберите клиента
+                        </option>
+
+                        @if (clients != null)
+                        {
+                            foreach (var client in clients)
+                            {
+                                <option value="@client.Id">
+                                    @client.Name
+                                </option>
+                            }
+                        }
+
+                    </select>
+
+                </div>
+
+            </section>
+
+            <section class="offer-builder-card offer-items-card">
+
+                <div class="offer-builder-card-header">
+
+                    <div>
+                        <span class="offer-builder-kicker">02</span>
+
+                        <h2>Позиции</h2>
+
+                        <p>
+                            Товары из каталога. Стоимость фиксируется на момент создания КП.
+                        </p>
+                    </div>
+
+                    <button type="button"
+                            id="add-item"
+                            class="offer-add-item">
+
+                        <i class="fas fa-plus"></i>
+                        Добавить позицию
+
+                    </button>
+
+                </div>
+
+
+                <div class="offer-items-head">
+
+                    <span>Товар</span>
+                    <span>Цена</span>
+                    <span>Количество</span>
+                    <span>Сумма</span>
+                    <span></span>
+
+                </div>
+
+
+                <div id="items-container"
+                     class="offer-items-container">
+
+                    <div class="offer-item-row"
+                         data-index="0">
+
+                        <div class="offer-product-cell">
+
+                            <select name="Items[0].ProductId"
+                                    class="offer-product-select"
+                                    required>
+
+                                <option value="">
+                                    Выберите товар
+                                </option>
+
+                                @if (products != null)
+                                {
+                                    foreach (var product in products)
+                                    {
+                                        <option value="@product.Id"
+                                                data-price="@product.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                data-stock="@product.Stock">
+
+                                            @product.Name
+                                            — @product.Price.ToString("N2") ₽
+                                            (остаток @product.Stock)
+
+                                        </option>
+                                    }
+                                }
+
+                            </select>
+
+                            <span class="offer-stock-info">
+                                Выберите товар
+                            </span>
+
+                        </div>
+
+
+                        <div class="offer-price">
+                            —
+                        </div>
+
+
+                        <div class="offer-quantity-cell">
+
+                            <input type="number"
+                                   name="Items[0].Quantity"
+                                   class="offer-quantity"
+                                   min="1"
+                                   value="1"
+                                   required />
+
+                        </div>
+
+
+                        <div class="offer-line-total">
+                            —
+                        </div>
+
+
+                        <button type="button"
+                                class="offer-remove-item"
+                                title="Удалить позицию">
+
+                            <i class="fas fa-trash"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+        <aside class="offer-builder-side">
+
+            <section class="offer-summary">
+
+                <div class="offer-summary-kicker">
+                    ИТОГО
+                </div>
+
+                <h2 id="offer-total">
+                    0,00 ₽
+                </h2>
+
+                <div class="offer-summary-line">
+
+                    <span>Позиций</span>
+                    <strong id="offer-item-count">0</strong>
+
+                </div>
+
+                <div class="offer-summary-line">
+
+                    <span>Количество товаров</span>
+                    <strong id="offer-quantity-total">0</strong>
+
+                </div>
+
+            </section>
+
+
+            <section class="offer-help-card">
+
+                <div class="offer-help-icon">
+                    <i class="fas fa-circle-info"></i>
+                </div>
+
+                <div>
+
+                    <strong>Номер КП присвоится автоматически</strong>
+
+                    <p>
+                        Система сформирует номер в формате
+                        ГГГГ-ММ-XXX.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <section class="offer-help-card">
+
+                <div class="offer-help-icon">
+                    <i class="fas fa-boxes-stacked"></i>
+                </div>
+
+                <div>
+
+                    <strong>Остатки учитываются</strong>
+
+                    <p>
+                        После создания КП количество товаров на складе уменьшается
+                        автоматически.
+                    </p>
+
+                </div>
+
+            </section>
+
+
+            <div class="offer-form-actions">
+
+                <a asp-action="Index"
+                   class="offer-cancel">
+                    Отмена
+                </a>
+
+                <button type="submit"
+                        class="offer-save">
+
+                    <i class="fas fa-check"></i>
+                    Создать КП
+
+                </button>
+
+            </div>
+
+        </aside>
+
+    </form>
+
+</div>
+
+
+@section Scripts {
+
+    <script>
+        (function () {
+
+            let itemIndex = 1;
+
+            const container = document.getElementById('items-container');
+            const addButton = document.getElementById('add-item');
+            const totalElement = document.getElementById('offer-total');
+            const itemCountElement = document.getElementById('offer-item-count');
+            const quantityTotalElement = document.getElementById('offer-quantity-total');
+
+            function formatMoney(value) {
+                return value.toLocaleString('ru-RU', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }) + ' ₽';
+            }
+
+            function updateRow(row) {
+
+                const select = row.querySelector('.offer-product-select');
+                const quantity = row.querySelector('.offer-quantity');
+                const priceElement = row.querySelector('.offer-price');
+                const lineTotal = row.querySelector('.offer-line-total');
+                const stockInfo = row.querySelector('.offer-stock-info');
+
+                const selected = select.options[select.selectedIndex];
+
+                if (!selected || !selected.value) {
+
+                    priceElement.textContent = '—';
+                    lineTotal.textContent = '—';
+                    stockInfo.textContent = 'Выберите товар';
+
+                    return {
+                        total: 0,
+                        quantity: 0
+                    };
+                }
+
+                const price = parseFloat(selected.dataset.price || '0');
+                const stock = parseInt(selected.dataset.stock || '0', 10);
+                const qty = Math.max(parseInt(quantity.value || '1', 10), 1);
+
+                quantity.value = qty;
+
+                priceElement.textContent = formatMoney(price);
+                lineTotal.textContent = formatMoney(price * qty);
+
+                stockInfo.textContent = 'Доступно на складе: ' + stock;
+
+                return {
+                    total: price * qty,
+                    quantity: qty
+                };
+            }
+
+            function updateSummary() {
+
+                let total = 0;
+                let quantityTotal = 0;
+                let itemsCount = 0;
+
+                document.querySelectorAll('.offer-item-row').forEach(row => {
+
+                    const result = updateRow(row);
+
+                    if (result.total > 0) {
+                        itemsCount++;
+                    }
+
+                    total += result.total;
+                    quantityTotal += result.quantity;
+                });
+
+                totalElement.textContent = formatMoney(total);
+                itemCountElement.textContent = itemsCount;
+                quantityTotalElement.textContent = quantityTotal;
+            }
+
+            function attachRowEvents(row) {
+
+                row.querySelector('.offer-product-select')
+                    .addEventListener('change', updateSummary);
+
+                row.querySelector('.offer-quantity')
+                    .addEventListener('input', updateSummary);
+
+                row.querySelector('.offer-remove-item')
+                    .addEventListener('click', function () {
+
+                        const rows =
+                            document.querySelectorAll('.offer-item-row');
+
+                        if (rows.length === 1) {
+                            alert('Должна быть хотя бы одна позиция товара.');
+                            return;
+                        }
+
+                        row.remove();
+                        updateSummary();
+                    });
+            }
+
+            addButton.addEventListener('click', function () {
+
+                const row = document.createElement('div');
+
+                row.className = 'offer-item-row';
+
+                row.innerHTML = `
+                    <div class="offer-product-cell">
+
+                        <select name="Items[${itemIndex}].ProductId"
+                                class="offer-product-select"
+                                required>
+
+                            <option value="">
+                                Выберите товар
+                            </option>
+
+                            @if (products != null)
+                            {
+                                    foreach (var product in products)
+                                    {
+                                            <text>
+                                            <option value="@product.Id"
+                                                    data-price="@product.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                    data-stock="@product.Stock">
+
+                                                @product.Name
+                                                — @product.Price.ToString("N2") ₽
+                                                (остаток @product.Stock)
+
+                                            </option>
+                                            </text>
+                                    }
+                            }
+
+                        </select>
+
+                        <span class="offer-stock-info">
+                            Выберите товар
+                        </span>
+
+                    </div>
+
+                    <div class="offer-price">
+                        —
+                    </div>
+
+                    <div class="offer-quantity-cell">
+
+                        <input type="number"
+                               name="Items[${itemIndex}].Quantity"
+                               class="offer-quantity"
+                               min="1"
+                               value="1"
+                               required />
+
+                    </div>
+
+                    <div class="offer-line-total">
+                        —
+                    </div>
+
+                    <button type="button"
+                            class="offer-remove-item"
+                            title="Удалить позицию">
+
+                        <i class="fas fa-trash"></i>
+
+                    </button>
+                `;
+
+                container.appendChild(row);
+
+                attachRowEvents(row);
+
+                itemIndex++;
+
+                updateSummary();
+            });
+
+            document
+                .querySelectorAll('.offer-item-row')
+                .forEach(attachRowEvents);
+
+            updateSummary();
+
+        })();
+    </script>
+
+}

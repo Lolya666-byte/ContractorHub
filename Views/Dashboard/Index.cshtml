@@ -1,0 +1,587 @@
+﻿@{
+    ViewData["Title"] = "Статистика";
+
+var offerLabels = ViewBag.OfferLabels ?? new List<string>();
+    var offerValues = ViewBag.OfferValues ?? new List<double>();
+
+    var clientNames = ViewBag.ClientNames ?? new List<string>();
+    var clientTotals = ViewBag.ClientTotals ?? new List<double>();
+
+    var contractStatusLabels = ViewBag.ContractStatusLabels ?? new List<string>();
+    var contractStatusValues = ViewBag.ContractStatusValues ?? new List<int>();
+
+}
+
+<div class="dashboard-page">
+
+
+    <section class="dashboard-header">
+
+        <div>
+            <div class="dashboard-eyebrow">
+                ОБЗОР БИЗНЕСА
+            </div>
+
+            <h1>Статистика</h1>
+
+            <p>
+                Ключевые показатели, коммерческие предложения и договоры.
+            </p>
+        </div>
+
+        <div class="dashboard-header-note">
+            <i class="fas fa-rotate"></i>
+
+            <span>
+                Данные обновляются автоматически
+            </span>
+        </div>
+
+    </section>
+
+
+    <section class="dashboard-kpis">
+
+        <article class="dashboard-kpi">
+
+            <div class="dashboard-kpi-top">
+                <span class="dashboard-kpi-label">
+                    КОММЕРЧЕСКИЕ ПРЕДЛОЖЕНИЯ
+                </span>
+
+                <div class="dashboard-kpi-icon dashboard-kpi-icon-blue">
+                    <i class="fas fa-file-lines"></i>
+                </div>
+            </div>
+
+            <strong class="dashboard-kpi-value">
+                @ViewBag.TotalOffers
+            </strong>
+
+            <div class="dashboard-kpi-footer">
+                <span>Всего КП</span>
+
+                <strong>
+                    @ViewBag.ApprovedOffers согласовано
+                </strong>
+            </div>
+
+        </article>
+
+
+        <article class="dashboard-kpi">
+
+            <div class="dashboard-kpi-top">
+                <span class="dashboard-kpi-label">
+                    СУММА КП
+                </span>
+
+                <div class="dashboard-kpi-icon dashboard-kpi-icon-terracotta">
+                    <i class="fas fa-ruble-sign"></i>
+                </div>
+            </div>
+
+            <strong class="dashboard-kpi-value dashboard-kpi-value-money">
+                @(((decimal)ViewBag.TotalOfferAmount).ToString("N0"))
+                <small>₽</small>
+            </strong>
+
+            <div class="dashboard-kpi-footer">
+                <span>Общая стоимость</span>
+
+                <strong>
+                    по всем КП
+                </strong>
+            </div>
+
+        </article>
+
+
+        <article class="dashboard-kpi">
+
+            <div class="dashboard-kpi-top">
+                <span class="dashboard-kpi-label">
+                    ДОГОВОРЫ
+                </span>
+
+                <div class="dashboard-kpi-icon dashboard-kpi-icon-blue">
+                    <i class="fas fa-file-contract"></i>
+                </div>
+            </div>
+
+            <strong class="dashboard-kpi-value">
+                @ViewBag.TotalContracts
+            </strong>
+
+            <div class="dashboard-kpi-footer">
+                <span>Всего договоров</span>
+
+                <strong>
+                    @ViewBag.ActiveContracts активных
+                </strong>
+            </div>
+
+        </article>
+
+
+        <article class="dashboard-kpi dashboard-kpi-featured">
+
+            <div class="dashboard-kpi-top">
+                <span class="dashboard-kpi-label">
+                    ОБОРОТ ПО ДОГОВОРАМ
+                </span>
+
+                <div class="dashboard-kpi-icon dashboard-kpi-icon-terracotta">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+
+            <strong class="dashboard-kpi-value dashboard-kpi-value-money">
+                @(((decimal)ViewBag.TotalContractAmount).ToString("N0"))
+                <small>₽</small>
+            </strong>
+
+            <div class="dashboard-kpi-footer">
+                <span>Общая сумма</span>
+
+                <strong>
+                    по договорам
+                </strong>
+            </div>
+
+        </article>
+
+    </section>
+
+
+
+    <section class="dashboard-grid dashboard-grid-main">
+
+        <article class="dashboard-card dashboard-card-large">
+
+            <header class="dashboard-card-header">
+
+                <div>
+                    <span class="dashboard-card-kicker">
+                        ДИНАМИКА
+                    </span>
+
+                    <h2>Сумма коммерческих предложений</h2>
+
+                    <p>
+                        Общая стоимость КП по месяцам.
+                    </p>
+                </div>
+
+                <div class="dashboard-card-icon">
+                    <i class="fas fa-chart-column"></i>
+                </div>
+
+            </header>
+
+            <div class="dashboard-chart dashboard-chart-main">
+                <canvas id="offersChart"></canvas>
+            </div>
+
+        </article>
+
+
+        <article class="dashboard-card dashboard-card-side">
+
+            <header class="dashboard-card-header">
+
+                <div>
+                    <span class="dashboard-card-kicker">
+                        КЛИЕНТЫ
+                    </span>
+
+                    <h2>Топ клиентов</h2>
+
+                    <p>
+                        По общей сумме договоров.
+                    </p>
+                </div>
+
+                <div class="dashboard-card-icon">
+                    <i class="fas fa-ranking-star"></i>
+                </div>
+
+            </header>
+
+            <div class="dashboard-chart dashboard-chart-donut">
+                <canvas id="clientsChart"></canvas>
+            </div>
+
+        </article>
+
+    </section>
+
+
+    <section class="dashboard-grid dashboard-grid-bottom">
+
+        <article class="dashboard-card">
+
+            <header class="dashboard-card-header">
+
+                <div>
+                    <span class="dashboard-card-kicker">
+                        ДОГОВОРЫ
+                    </span>
+
+                    <h2>Состояние договоров</h2>
+
+                    <p>
+                        Распределение текущего реестра по статусам.
+                    </p>
+                </div>
+
+                <div class="dashboard-card-icon">
+                    <i class="fas fa-list-check"></i>
+                </div>
+
+            </header>
+
+            <div class="dashboard-status-list">
+
+                @{
+                    var statusIcons = new Dictionary<string, string>
+                    {
+                        ["Черновик"] = "fa-file",
+                        ["На подписи"] = "fa-pen-nib",
+                        ["Активен"] = "fa-circle-check",
+                        ["Закрыт"] = "fa-lock"
+                    };
+
+                    var statusClasses = new Dictionary<string, string>
+                    {
+                        ["Черновик"] = "status-draft",
+                        ["На подписи"] = "status-signing",
+                        ["Активен"] = "status-active",
+                        ["Закрыт"] = "status-closed"
+                    };
+                }
+
+                @for (var i = 0; i < contractStatusLabels.Length && i < contractStatusValues.Count; i++)
+                {
+                    var label = contractStatusLabels[i];
+                    var value = contractStatusValues[i];
+
+                    var icon = "fa-file";
+                    var statusClass = "status-default";
+
+                    if (label == "Черновик")
+                    {
+                        icon = "fa-file";
+                        statusClass = "status-draft";
+                    }
+                    else if (label == "На подписи")
+                    {
+                        icon = "fa-pen-nib";
+                        statusClass = "status-signing";
+                    }
+                    else if (label == "Активен")
+                    {
+                        icon = "fa-circle-check";
+                        statusClass = "status-active";
+                    }
+                    else if (label == "Закрыт")
+                    {
+                        icon = "fa-lock";
+                        statusClass = "status-closed";
+                    }
+
+                    <div class="dashboard-status-row">
+
+                        <div class="dashboard-status-name">
+
+                            <span class="dashboard-status-icon @statusClass">
+                                <i class="fas @icon"></i>
+                            </span>
+
+                            <span>
+                                @label
+                            </span>
+
+                        </div>
+
+                        <strong>
+                            @value
+                        </strong>
+
+                    </div>
+                }
+
+            </div>
+
+        </article>
+
+
+        <article class="dashboard-card">
+
+            <header class="dashboard-card-header">
+
+                <div>
+                    <span class="dashboard-card-kicker">
+                        ФИНАНСЫ
+                    </span>
+
+                    <h2>Коммерческий поток</h2>
+
+                    <p>
+                        Сравнение объёмов КП и договоров.
+                    </p>
+                </div>
+
+                <div class="dashboard-card-icon">
+                    <i class="fas fa-arrow-trend-up"></i>
+                </div>
+
+            </header>
+
+            <div class="dashboard-finance">
+
+                <div class="dashboard-finance-row">
+
+                    <div>
+                        <span>
+                            Сумма КП
+                        </span>
+
+                        <strong>
+                            @(((decimal)ViewBag.TotalOfferAmount).ToString("N0"))
+                            <small>₽</small>
+                        </strong>
+                    </div>
+
+                    <div class="dashboard-finance-badge">
+                        <i class="fas fa-file-lines"></i>
+                    </div>
+
+                </div>
+
+
+                <div class="dashboard-finance-divider"></div>
+
+
+                <div class="dashboard-finance-row">
+
+                    <div>
+                        <span>
+                            Сумма договоров
+                        </span>
+
+                        <strong>
+                            @(((decimal)ViewBag.TotalContractAmount).ToString("N0"))
+                            <small>₽</small>
+                        </strong>
+                    </div>
+
+                    <div class="dashboard-finance-badge">
+                        <i class="fas fa-file-contract"></i>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </article>
+
+    </section>
+
+</div>
+
+@section Scripts {
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+
+        const offerLabels =
+            @Html.Raw(Json.Serialize(offerLabels));
+
+        const offerValues =
+            @Html.Raw(Json.Serialize(offerValues));
+
+        const clientNames =
+            @Html.Raw(Json.Serialize(clientNames));
+
+        const clientTotals =
+            @Html.Raw(Json.Serialize(clientTotals));
+
+
+        const offersCanvas =
+            document.getElementById('offersChart');
+
+        if (offersCanvas) {
+
+            new Chart(offersCanvas, {
+
+                type: 'bar',
+
+                data: {
+                    labels: offerLabels,
+
+                    datasets: [{
+                        data: offerValues,
+
+                        backgroundColor:
+                            'rgba(26, 58, 92, 0.72)',
+
+                        borderColor:
+                            '#1a3a5c',
+
+                        borderWidth: 0,
+
+                        borderRadius: 2,
+
+                        maxBarThickness: 48
+                    }]
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    plugins: {
+
+                        legend: {
+                            display: false
+                        },
+
+                        tooltip: {
+                            displayColors: false,
+
+                            callbacks: {
+                                label: function(context) {
+                                    return Number(context.raw)
+                                        .toLocaleString('ru-RU') + ' ₽';
+                                }
+                            }
+                        }
+                    },
+
+                    scales: {
+
+                        x: {
+                            grid: {
+                                display: false
+                            },
+
+                            ticks: {
+                                color: '#8a8a92',
+                                font: {
+                                    family: 'Inter',
+                                    size: 10
+                                }
+                            },
+
+                            border: {
+                                display: false
+                            }
+                        },
+
+                        y: {
+                            beginAtZero: true,
+
+                            grid: {
+                                color:
+                                    'rgba(26, 26, 30, 0.06)'
+                            },
+
+                            ticks: {
+                                color: '#8a8a92',
+
+                                font: {
+                                    family: 'Inter',
+                                    size: 10
+                                },
+
+                                callback: function(value) {
+                                    return Number(value)
+                                        .toLocaleString('ru-RU');
+                                }
+                            },
+
+                            border: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+
+            });
+        }
+
+
+        const clientsCanvas =
+            document.getElementById('clientsChart');
+
+        if (clientsCanvas) {
+
+            new Chart(clientsCanvas, {
+
+                type: 'doughnut',
+
+                data: {
+
+                    labels: clientNames,
+
+                    datasets: [{
+
+                        data: clientTotals,
+
+                        backgroundColor: [
+                            '#1a3a5c',
+                            '#b85c3a',
+                            '#617891',
+                            '#8f7669',
+                            '#a9a39b'
+                        ],
+
+                        borderColor:
+                            '#e8e6e0',
+
+                        borderWidth: 3,
+
+                        hoverOffset: 4
+                    }]
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    cutout: '67%',
+
+                    plugins: {
+
+                        legend: {
+                            display: false
+                        },
+
+                        tooltip: {
+
+                            callbacks: {
+
+                                label: function(context) {
+
+                                    return ' ' +
+                                        Number(context.raw)
+                                            .toLocaleString('ru-RU') +
+                                        ' ₽';
+                                }
+                            }
+                        }
+                    }
+                }
+
+            });
+        }
+
+    </script>
+
+}

@@ -1,0 +1,487 @@
+﻿@model IEnumerable<ContractorHub.Models.Product>
+
+@{
+    ViewData["Title"] = "Товары";
+
+    var products = Model?.ToList() ?? new List<ContractorHub.Models.Product>();
+    var searchString = ViewContext.HttpContext.Request.Query["searchString"].ToString();
+
+    string GetStockClass(int? stock)
+    {
+        if (!stock.HasValue || stock.Value <= 0)
+            return "product-stock-empty";
+
+        if (stock.Value <= 10)
+            return "product-stock-low";
+
+        return "product-stock-good";
+    }
+
+    string GetStockLabel(int? stock)
+    {
+        if (!stock.HasValue)
+            return "Не указан";
+
+        if (stock.Value <= 0)
+            return "Нет в наличии";
+
+        if (stock.Value <= 10)
+            return "Мало на складе";
+
+        return "В наличии";
+    }
+}
+
+<div class="products-page">
+
+    <section class="products-header">
+
+        <div>
+            <div class="products-eyebrow">
+                КАТАЛОГ / СКЛАД
+            </div>
+
+            <div class="products-title-row">
+                <h1>Товары</h1>
+
+                <span class="products-count-badge">
+                    @products.Count
+                </span>
+            </div>
+
+            <p>
+                Каталог продукции, цены и текущие остатки.
+            </p>
+        </div>
+
+        <a asp-action="Create"
+           class="products-create-button">
+
+            <i class="fas fa-plus"></i>
+            Новый товар
+
+        </a>
+
+    </section>
+
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="hub-notice hub-notice-success">
+
+            <span class="hub-notice-icon">
+                <i class="fas fa-check"></i>
+            </span>
+
+            <span>@TempData["Success"]</span>
+
+            <button type="button"
+                    class="hub-notice-close"
+                    data-bs-dismiss="alert">
+
+                <i class="fas fa-xmark"></i>
+
+            </button>
+
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="hub-notice hub-notice-error">
+
+            <span class="hub-notice-icon">
+                <i class="fas fa-exclamation"></i>
+            </span>
+
+            <span>@TempData["Error"]</span>
+
+            <button type="button"
+                    class="hub-notice-close"
+                    data-bs-dismiss="alert">
+
+                <i class="fas fa-xmark"></i>
+
+            </button>
+
+        </div>
+    }
+
+
+    <section class="products-toolbar">
+
+        <form method="get"
+              asp-action="Index"
+              class="products-search-form">
+
+            <div class="products-search">
+
+                <i class="fas fa-magnifying-glass"></i>
+
+                <input type="text"
+                       name="searchString"
+                       value="@searchString"
+                       placeholder="Поиск по названию, категории или описанию..."
+                       autocomplete="off" />
+
+                @if (!string.IsNullOrWhiteSpace(searchString))
+                {
+                    <a asp-action="Index"
+                       class="products-search-clear">
+
+                        <i class="fas fa-xmark"></i>
+
+                    </a>
+                }
+
+            </div>
+
+            <button type="submit"
+                    class="products-search-button">
+                Найти
+            </button>
+
+            @if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                <a asp-action="Index"
+                   class="products-reset-button">
+                    Сбросить
+                </a>
+            }
+
+        </form>
+
+
+        <div class="products-toolbar-meta">
+
+            @if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                <span>
+                    Результаты:
+                    <strong>@products.Count</strong>
+                </span>
+            }
+            else
+            {
+                <span>
+                    Всего:
+                    <strong>@products.Count</strong>
+                </span>
+            }
+
+        </div>
+
+    </section>
+
+
+    <section class="products-table-card">
+
+        @if (products.Any())
+        {
+            <div class="products-table-wrapper">
+
+                <table class="products-table">
+
+                    <thead>
+                        <tr>
+                            <th class="products-name-column">Товар</th>
+                            <th>Категория</th>
+                            <th>Цена</th>
+                            <th>Остаток</th>
+                            <th>Описание</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var product in products)
+                        {
+                            <tr>
+
+                                <td>
+
+                                    <div class="product-main-cell">
+
+                                        <div class="product-icon">
+                                            <i class="fas fa-box"></i>
+                                        </div>
+
+                                        <div class="product-main-info">
+
+                                            <strong>
+                                                @product.Name
+                                            </strong>
+
+                                            @if (!string.IsNullOrWhiteSpace(product.Description))
+                                            {
+                                                <span>
+                                                    @product.Description
+                                                </span>
+                                            }
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+
+                                    @if (!string.IsNullOrWhiteSpace(product.Category))
+                                    {
+                                        <span class="product-category">
+                                            @product.Category
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="product-empty">
+                                            Без категории
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <td>
+
+                                    <div class="product-price">
+                                        @product.Price.ToString("N2") ₽
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+
+                                    <div class="product-stock-cell">
+
+                                        <div class="product-stock-top">
+
+                                            <strong>
+                                                @(product.Stock?.ToString() ?? "—")
+                                            </strong>
+
+                                            <span class="product-stock-status @GetStockClass(product.Stock)">
+                                                @GetStockLabel(product.Stock)
+                                            </span>
+
+                                        </div>
+
+
+                                        @if (product.Stock.HasValue)
+                                        {
+                                            <form method="post"
+                                                  asp-action="UpdateStock"
+                                                  class="product-stock-form">
+
+                                                <input type="hidden"
+                                                       name="id"
+                                                       value="@product.Id" />
+
+                                                <input type="number"
+                                                       name="newStock"
+                                                       value="@product.Stock"
+                                                       min="0"
+                                                       step="1"
+                                                       class="product-stock-input"
+                                                       aria-label="Изменить остаток" />
+
+                                                <button type="submit"
+                                                        class="product-stock-save"
+                                                        title="Обновить остаток">
+
+                                                    <i class="fas fa-check"></i>
+
+                                                </button>
+
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <form method="post"
+                                                  asp-action="UpdateStock"
+                                                  class="product-stock-form">
+
+                                                <input type="hidden"
+                                                       name="id"
+                                                       value="@product.Id" />
+
+                                                <input type="number"
+                                                       name="newStock"
+                                                       value="0"
+                                                       min="0"
+                                                       step="1"
+                                                       class="product-stock-input"
+                                                       aria-label="Указать остаток" />
+
+                                                <button type="submit"
+                                                        class="product-stock-save"
+                                                        title="Указать остаток">
+
+                                                    <i class="fas fa-check"></i>
+
+                                                </button>
+
+                                            </form>
+                                        }
+
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+
+                                    @if (!string.IsNullOrWhiteSpace(product.Description))
+                                    {
+                                        <div class="product-description">
+                                            @product.Description
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="product-empty">
+                                            Описание отсутствует
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <td>
+
+                                    <div class="product-actions">
+
+                                        <a asp-action="Edit"
+                                           asp-route-id="@product.Id"
+                                           class="product-action-button"
+                                           title="Редактировать">
+
+                                            <i class="fas fa-pen"></i>
+
+                                        </a>
+
+
+                                        <div class="dropdown">
+
+                                            <button type="button"
+                                                    class="product-action-button"
+                                                    data-bs-toggle="dropdown"
+                                                    aria-expanded="false"
+                                                    title="Дополнительно">
+
+                                                <i class="fas fa-ellipsis"></i>
+
+                                            </button>
+
+
+                                            <ul class="dropdown-menu dropdown-menu-end product-dropdown">
+
+                                                <li class="product-dropdown-title">
+                                                    Действия
+                                                </li>
+
+                                                <li>
+
+                                                    <a class="dropdown-item"
+                                                       asp-action="Edit"
+                                                       asp-route-id="@product.Id">
+
+                                                        <i class="fas fa-pen"></i>
+                                                        Редактировать
+
+                                                    </a>
+
+                                                </li>
+
+
+                                                <li>
+
+                                                    <form method="post"
+                                                          asp-action="Delete">
+
+                                                        <input type="hidden"
+                                                               name="id"
+                                                               value="@product.Id" />
+
+                                                        <button type="submit"
+                                                                class="dropdown-item product-delete-item"
+                                                                onclick="return confirm('Удалить товар «@product.Name»?');">
+
+                                                            <i class="fas fa-trash"></i>
+                                                            Удалить
+
+                                                        </button>
+
+                                                    </form>
+
+                                                </li>
+
+                                            </ul>
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        }
+        else
+        {
+            <div class="products-empty">
+
+                <div class="products-empty-icon">
+                    <i class="fas fa-box-open"></i>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(searchString))
+                {
+                    <h2>Товары не найдены</h2>
+
+                    <p>
+                        По запросу
+                        <strong>«@searchString»</strong>
+                        ничего не найдено.
+                    </p>
+
+                    <a asp-action="Index"
+                       class="products-empty-button">
+
+                        Сбросить поиск
+
+                    </a>
+                }
+                else
+                {
+                    <h2>Каталог пока пуст</h2>
+
+                    <p>
+                        Добавьте первый товар, чтобы начать формировать коммерческие предложения.
+                    </p>
+
+                    <a asp-action="Create"
+                       class="products-empty-button">
+
+                        <i class="fas fa-plus"></i>
+                        Добавить товар
+
+                    </a>
+                }
+
+            </div>
+        }
+
+    </section>
+
+</div>
