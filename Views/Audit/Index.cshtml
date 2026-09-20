@@ -1,0 +1,189 @@
+@model IEnumerable<ContractorHub.Models.AuditLogViewModel>
+
+@{
+    ViewData["Title"] = "Журнал активности";
+    var logs = Model?.ToList() ?? new List<ContractorHub.Models.AuditLogViewModel>();
+}
+
+<div class="audit-page">
+
+    <div class="audit-page-header">
+        <div>
+            <div class="audit-page-kicker">
+                <i class="fas fa-clock-rotate-left"></i>
+                Контроль действий
+            </div>
+
+            <h1>Журнал активности</h1>
+
+            <p>
+                История действий пользователей и событий в системе.
+            </p>
+        </div>
+
+        <div class="audit-total">
+            <span>Записей в журнале</span>
+            <strong>@logs.Count</strong>
+        </div>
+    </div>
+
+    <div class="audit-summary">
+        <div class="audit-summary-icon">
+            <i class="fas fa-list-check"></i>
+        </div>
+
+        <div>
+            <span>Всего событий</span>
+            <strong>@logs.Count</strong>
+        </div>
+    </div>
+
+    <form asp-controller="Audit"
+          asp-action="Index"
+          method="get"
+          class="audit-toolbar">
+
+        <div class="audit-search">
+            <i class="fas fa-magnifying-glass"></i>
+
+            <input type="text"
+                   name="search"
+                   value="@ViewBag.Search"
+                   placeholder="Поиск по сотруднику, описанию или объекту..." />
+        </div>
+
+        <div class="audit-action-filter">
+            <i class="fas fa-filter"></i>
+
+            <input type="text"
+                   name="action"
+                   value="@ViewBag.Action"
+                   placeholder="Фильтр по действию..." />
+        </div>
+
+        <button type="submit" class="audit-filter-button">
+            <i class="fas fa-sliders"></i>
+            Применить
+        </button>
+
+        <a asp-controller="Audit"
+           asp-action="Index"
+           class="audit-reset-button">
+            Сбросить
+        </a>
+    </form>
+
+    <section class="audit-table-card">
+
+        <div class="audit-table-heading">
+            <div>
+                <h2>События системы</h2>
+                <p>Записи расположены от новых к более ранним.</p>
+            </div>
+
+            <span class="audit-record-count">
+                @logs.Count записей
+            </span>
+        </div>
+
+        @if (logs.Count == 0)
+        {
+            <div class="audit-empty">
+                <div class="audit-empty-icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
+
+                <h3>Записи не найдены</h3>
+
+                <p>
+                    Попробуйте изменить поисковый запрос или сбросить фильтры.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="audit-table-wrapper">
+                <table class="audit-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Сотрудник</th>
+                            <th>Действие</th>
+                            <th>Объект</th>
+                            <th>Описание</th>
+                            <th>Дата и время</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var log in logs)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="audit-id">#@log.Id</span>
+                                </td>
+
+                                <td>
+                                    <div class="audit-user">
+                                        <span class="audit-user-icon">
+                                            <i class="fas fa-user"></i>
+                                        </span>
+
+                                        <strong>
+                                            @(string.IsNullOrWhiteSpace(log.UserName)
+                                                                                ? "Неизвестный пользователь"
+                                                                                : log.UserName)
+                                                                                           </strong>
+                                                                                       </div>
+                                                                                   </td>
+
+                                <td>
+                                    <span class="audit-action">
+                                        @log.Action
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="audit-entity">
+                                        @(string.IsNullOrWhiteSpace(log.EntityType)
+                                                                        ? "—"
+                                                                        : log.EntityType)
+                                                                                     </span>
+                                                                                 </td>
+
+                                <td>
+                                    <span class="audit-description">
+                                        @(string.IsNullOrWhiteSpace(log.Description)
+                                                                        ? "—"
+                                                                        : log.Description)
+                            </span>
+                        </td>
+
+                                <td>
+                                    <span class="audit-date">
+                                        @log.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                                    </span>
+
+                                    <small class="audit-time">
+                                        @log.CreatedAt.ToLocalTime().ToString("HH:mm:ss")
+                                    </small>
+                                </td>
+                            </tr>
+                                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+    </section>
+
+    <div class="audit-footer-note">
+        <span>
+            <i class="fas fa-shield-halved"></i>
+            Журнал доступен администраторам системы
+        </span>
+
+        <span>Contractor Hub / Audit</span>
+    </div>
+
+</div>

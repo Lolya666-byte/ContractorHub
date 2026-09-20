@@ -1,3 +1,7 @@
-﻿@using ContractorHub
+@using ContractorHub
 @using ContractorHub.Models
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@using ContractorHub.Services
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService

@@ -1,5 +1,23 @@
-﻿@{
+@{
     ViewData["Title"] = "Рабочий стол";
+
+    var overdueDeals = ViewBag.OverdueDeals as List<ContractorHub.Models.Deal> ?? new List<ContractorHub.Models.Deal>();
+
+    bool canViewClients = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.ClientsView)).Succeeded;
+    bool canManageClients = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.ClientsManage)).Succeeded;
+
+    bool canViewProducts = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.ProductsView)).Succeeded;
+    bool canManageProducts = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.ProductsManage)).Succeeded;
+
+    bool canViewOffers = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.OffersView)).Succeeded;
+    bool canManageOffers = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.OffersManage)).Succeeded;
+
+    bool canViewContracts = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.ContractsView)).Succeeded;
+    bool canViewDeals = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.DealsView)).Succeeded;
+    bool canManageDeals = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.DealsManage)).Succeeded;
+
+    bool canViewDashboard = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.DashboardView)).Succeeded;
+    bool canManageUsers = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.UsersManage)).Succeeded;
 }
 
 <div class="hub-home">
@@ -36,80 +54,89 @@
 
         <div class="hub-stats">
 
-            <a asp-controller="Clients"
-               asp-action="Index"
-               class="hub-stat">
-                <div class="hub-stat-top">
-                    <span class="hub-stat-label">Клиенты</span>
-                    <span class="hub-stat-icon">
-                        <i class="fas fa-users"></i>
-                    </span>
-                </div>
+            @if (canViewClients)
+            {
+                <a asp-controller="Clients"
+                   asp-action="Index"
+                   class="hub-stat">
+                    <div class="hub-stat-top">
+                        <span class="hub-stat-label">Клиенты</span>
+                        <span class="hub-stat-icon">
+                            <i class="fas fa-users"></i>
+                        </span>
+                    </div>
 
-                <div class="hub-stat-value">@ViewBag.ClientCount</div>
+                    <div class="hub-stat-value">@ViewBag.ClientCount</div>
 
-                <div class="hub-stat-bottom">
-                    <span>Клиентская база</span>
-                    <i class="fas fa-arrow-up-right-from-square"></i>
-                </div>
-            </a>
+                    <div class="hub-stat-bottom">
+                        <span>Клиентская база</span>
+                        <i class="fas fa-arrow-up-right-from-square"></i>
+                    </div>
+                </a>
+            }
 
+            @if (canViewProducts)
+            {
+                <a asp-controller="Products"
+                   asp-action="Index"
+                   class="hub-stat">
+                    <div class="hub-stat-top">
+                        <span class="hub-stat-label">Товары</span>
+                        <span class="hub-stat-icon">
+                            <i class="fas fa-box"></i>
+                        </span>
+                    </div>
 
-            <a asp-controller="Products"
-               asp-action="Index"
-               class="hub-stat">
-                <div class="hub-stat-top">
-                    <span class="hub-stat-label">Товары</span>
-                    <span class="hub-stat-icon">
-                        <i class="fas fa-box"></i>
-                    </span>
-                </div>
+                    <div class="hub-stat-value">@ViewBag.ProductCount</div>
 
-                <div class="hub-stat-value">@ViewBag.ProductCount</div>
+                    <div class="hub-stat-bottom">
+                        <span>Каталог продукции</span>
+                        <i class="fas fa-arrow-up-right-from-square"></i>
+                    </div>
+                </a>
+            }
 
-                <div class="hub-stat-bottom">
-                    <span>Каталог продукции</span>
-                    <i class="fas fa-arrow-up-right-from-square"></i>
-                </div>
-            </a>
+            @if (canViewOffers)
+            {
+                <a asp-controller="CommercialOffers"
+                   asp-action="Index"
+                   class="hub-stat">
+                    <div class="hub-stat-top">
+                        <span class="hub-stat-label">Коммерческие предложения</span>
+                        <span class="hub-stat-icon">
+                            <i class="fas fa-file-lines"></i>
+                        </span>
+                    </div>
 
+                    <div class="hub-stat-value">@ViewBag.OfferCount</div>
 
-            <a asp-controller="CommercialOffers"
-               asp-action="Index"
-               class="hub-stat">
-                <div class="hub-stat-top">
-                    <span class="hub-stat-label">Коммерческие предложения</span>
-                    <span class="hub-stat-icon">
-                        <i class="fas fa-file-lines"></i>
-                    </span>
-                </div>
+                    <div class="hub-stat-bottom">
+                        <span>Документы</span>
+                        <i class="fas fa-arrow-up-right-from-square"></i>
+                    </div>
+                </a>
+            }
 
-                <div class="hub-stat-value">@ViewBag.OfferCount</div>
+            @if (canViewContracts)
+            {
+                <a asp-controller="Contracts"
+                   asp-action="Index"
+                   class="hub-stat">
+                    <div class="hub-stat-top">
+                        <span class="hub-stat-label">Договоры</span>
+                        <span class="hub-stat-icon">
+                            <i class="fas fa-file-contract"></i>
+                        </span>
+                    </div>
 
-                <div class="hub-stat-bottom">
-                    <span>Документы</span>
-                    <i class="fas fa-arrow-up-right-from-square"></i>
-                </div>
-            </a>
+                    <div class="hub-stat-value">@ViewBag.ContractCount</div>
 
-
-            <a asp-controller="Contracts"
-               asp-action="Index"
-               class="hub-stat">
-                <div class="hub-stat-top">
-                    <span class="hub-stat-label">Договоры</span>
-                    <span class="hub-stat-icon">
-                        <i class="fas fa-file-contract"></i>
-                    </span>
-                </div>
-
-                <div class="hub-stat-value">@ViewBag.ContractCount</div>
-
-                <div class="hub-stat-bottom">
-                    <span>Договорная база</span>
-                    <i class="fas fa-arrow-up-right-from-square"></i>
-                </div>
-            </a>
+                    <div class="hub-stat-bottom">
+                        <span>Договорная база</span>
+                        <i class="fas fa-arrow-up-right-from-square"></i>
+                    </div>
+                </a>
+            }
 
         </div>
     </section>
@@ -129,54 +156,136 @@
 
             <div class="hub-actions">
 
-                <a asp-controller="Clients"
-                   asp-action="Create"
-                   class="hub-action">
-                    <span class="hub-action-icon">
-                        <i class="fas fa-user-plus"></i>
-                    </span>
+                @if (canManageClients)
+                {
+                    <a asp-controller="Clients"
+                       asp-action="Create"
+                       class="hub-action">
+                        <span class="hub-action-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </span>
+                        <span>
+                            <strong>Новый клиент</strong>
+                            <small>Добавить компанию в базу</small>
+                        </span>
+                        <i class="fas fa-arrow-right hub-action-arrow"></i>
+                    </a>
+                }
 
-                    <span>
-                        <strong>Новый клиент</strong>
-                        <small>Добавить компанию в базу</small>
-                    </span>
+                @if (canManageProducts)
+                {
+                    <a asp-controller="Products"
+                       asp-action="Create"
+                       class="hub-action">
+                        <span class="hub-action-icon">
+                            <i class="fas fa-box-open"></i>
+                        </span>
+                        <span>
+                            <strong>Новый товар</strong>
+                            <small>Добавить позицию в каталог</small>
+                        </span>
+                        <i class="fas fa-arrow-right hub-action-arrow"></i>
+                    </a>
+                }
 
-                    <i class="fas fa-arrow-right hub-action-arrow"></i>
-                </a>
+                @if (canManageOffers)
+                {
+                    <a asp-controller="CommercialOffers"
+                       asp-action="Create"
+                       class="hub-action">
+                        <span class="hub-action-icon">
+                            <i class="fas fa-file-circle-plus"></i>
+                        </span>
+                        <span>
+                            <strong>Новое КП</strong>
+                            <small>Создать коммерческое предложение</small>
+                        </span>
+                        <i class="fas fa-arrow-right hub-action-arrow"></i>
+                    </a>
+                }
 
+                @if (canManageDeals)
+                {
+                    <a asp-controller="Deals"
+                       asp-action="Create"
+                       class="hub-action">
+                        <span class="hub-action-icon">
+                            <i class="fas fa-handshake"></i>
+                        </span>
+                        <span>
+                            <strong>Новая сделка</strong>
+                            <small>Начать работу с клиентом и КП</small>
+                        </span>
+                        <i class="fas fa-arrow-right hub-action-arrow"></i>
+                    </a>
+                }
 
-                <a asp-controller="Products"
-                   asp-action="Create"
-                   class="hub-action">
-                    <span class="hub-action-icon">
-                        <i class="fas fa-box-open"></i>
-                    </span>
+                @if (canViewDeals)
+                {
+                    <a asp-controller="Deals"
+                       asp-action="Index"
+                       class="hub-action">
+                        <span class="hub-action-icon">
+                            <i class="fas fa-list-check"></i>
+                        </span>
+                        <span>
+                            <strong>Сделки</strong>
+                            <small>Реестр продаж и текущих этапов</small>
+                        </span>
+                        <i class="fas fa-arrow-right hub-action-arrow"></i>
+                    </a>
+                }
 
-                    <span>
-                        <strong>Новый товар</strong>
-                        <small>Добавить позицию в каталог</small>
-                    </span>
+                @if (canManageUsers)
+                {
+                    <a asp-controller="Users"
+                       asp-action="Index"
+                       class="hub-action">
+                        <span class="hub-action-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </span>
+                        <span>
+                            <strong>Сотрудники</strong>
+                            <small>Управление доступом и ролями</small>
+                        </span>
+                        <i class="fas fa-arrow-right hub-action-arrow"></i>
+                    </a>
+                }
 
-                    <i class="fas fa-arrow-right hub-action-arrow"></i>
-                </a>
+                @if (canViewContracts)
+                {
+                    <a asp-controller="Contracts"
+                       asp-action="Index"
+                       class="hub-action">
+                        <span class="hub-action-icon">
+                            <i class="fas fa-file-contract"></i>
+                        </span>
+                        <span>
+                            <strong>Договоры</strong>
+                            <small>Просмотр и контроль договорной базы</small>
+                        </span>
+                        <i class="fas fa-arrow-right hub-action-arrow"></i>
+                    </a>
+                }
 
-
-                <a asp-controller="CommercialOffers"
-                   asp-action="Create"
-                   class="hub-action">
-                    <span class="hub-action-icon">
-                        <i class="fas fa-file-circle-plus"></i>
-                    </span>
-
-                    <span>
-                        <strong>Новое КП</strong>
-                        <small>Создать коммерческое предложение</small>
-                    </span>
-
-                    <i class="fas fa-arrow-right hub-action-arrow"></i>
-                </a>
+                @if (canViewDashboard)
+                {
+                    <a asp-controller="Dashboard"
+                       asp-action="Index"
+                       class="hub-action">
+                        <span class="hub-action-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </span>
+                        <span>
+                            <strong>Статистика</strong>
+                            <small>Контроль показателей системы</small>
+                        </span>
+                        <i class="fas fa-arrow-right hub-action-arrow"></i>
+                    </a>
+                }
 
             </div>
+
         </div>
         <div class="hub-panel hub-system-panel">
 
@@ -195,44 +304,68 @@
 
             <div class="hub-system-list">
 
-                <div class="hub-system-row">
-                    <div class="hub-system-label">
-                        <span class="hub-system-dot"></span>
-                        Клиенты
+                @if (canViewClients)
+                {
+                    <div class="hub-system-row">
+                        <div class="hub-system-label">
+                            <span class="hub-system-dot"></span>
+                            Клиенты
+                        </div>
+                        <strong>@ViewBag.ClientCount</strong>
+                    </div>
+                }
+
+                @if (canViewProducts)
+                {
+                    <div class="hub-system-row">
+                        <div class="hub-system-label">
+                            <span class="hub-system-dot"></span>
+                            Товары
+                        </div>
+                        <strong>@ViewBag.ProductCount</strong>
+                    </div>
+                }
+
+                @if (canViewOffers)
+                {
+                    <div class="hub-system-row">
+                        <div class="hub-system-label">
+                            <span class="hub-system-dot"></span>
+                            КП
+                        </div>
+                        <strong>@ViewBag.OfferCount</strong>
+                    </div>
+                }
+
+                @if (canViewContracts)
+                {
+                    <div class="hub-system-row">
+                        <div class="hub-system-label">
+                            <span class="hub-system-dot"></span>
+                            Договоры
+                        </div>
+                        <strong>@ViewBag.ContractCount</strong>
+                    </div>
+                }
+
+                @if (canViewDeals)
+                {
+                    <div class="hub-system-row">
+                        <div class="hub-system-label">
+                            <span class="hub-system-dot"></span>
+                            Сделки
+                        </div>
+                        <strong>@ViewBag.DealCount</strong>
                     </div>
 
-                    <strong>@ViewBag.ClientCount</strong>
-                </div>
-
-
-                <div class="hub-system-row">
-                    <div class="hub-system-label">
-                        <span class="hub-system-dot"></span>
-                        Товары
+                    <div class="hub-system-row hub-system-row-alert">
+                        <div class="hub-system-label">
+                            <span class="hub-system-dot"></span>
+                            Просроченные действия
+                        </div>
+                        <strong>@ViewBag.OverdueDealCount</strong>
                     </div>
-
-                    <strong>@ViewBag.ProductCount</strong>
-                </div>
-
-
-                <div class="hub-system-row">
-                    <div class="hub-system-label">
-                        <span class="hub-system-dot"></span>
-                        КП
-                    </div>
-
-                    <strong>@ViewBag.OfferCount</strong>
-                </div>
-
-
-                <div class="hub-system-row">
-                    <div class="hub-system-label">
-                        <span class="hub-system-dot"></span>
-                        Договоры
-                    </div>
-
-                    <strong>@ViewBag.ContractCount</strong>
-                </div>
+                }
 
             </div>
 
@@ -245,6 +378,46 @@
         </div>
 
     </section>
+
+    @if (canViewDeals)
+    {
+        <section class="hub-overdue-panel">
+            <div class="hub-panel-header">
+                <div>
+                    <span class="hub-section-kicker">КОНТРОЛЬ</span>
+                    <h2>Просроченные действия</h2>
+                </div>
+                <span class="hub-panel-number">@ViewBag.OverdueDealCount</span>
+            </div>
+
+            @if (overdueDeals.Any())
+            {
+                <div class="hub-overdue-list">
+                    @foreach (var deal in overdueDeals)
+                    {
+                        <a asp-controller="Deals" asp-action="Details" asp-route-id="@deal.Id" class="hub-overdue-item">
+                            <span class="hub-overdue-icon"><i class="fas fa-clock"></i></span>
+                            <span class="hub-overdue-content">
+                                <strong>@deal.DealNumber · @(deal.Client?.Name ?? "Клиент не указан")</strong>
+                                <small>@(deal.NextAction ?? "Следующее действие не указано")</small>
+                            </span>
+                            <span class="hub-overdue-date">@deal.NextActionAt!.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                            <i class="fas fa-arrow-right hub-overdue-arrow"></i>
+                        </a>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="hub-overdue-empty">
+                    <i class="fas fa-circle-check"></i>
+                    <strong>Просроченных действий нет</strong>
+                    <span>Все следующие шаги по активным сделкам находятся в сроках.</span>
+                </div>
+            }
+        </section>
+    }
+
     <div class="hub-footer-note">
         <span>Contractor Hub</span>
         <span>Рабочая панель управления</span>

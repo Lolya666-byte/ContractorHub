@@ -1,128 +1,52 @@
-﻿using ContractorHub.Models;
+using ContractorHub.Models;
+using ContractorHub.Services;
 
 namespace ContractorHub.Data
 {
-	public static class SeedData
-	{
-		public static void Initialize(AppDbContext context)
-		{
-			if (context.Clients.Any())
-			{
-				return; 
-			}
+    public static class SeedData
+    {
+        public static void Initialize(AppDbContext context)
+        {
+            if (!context.Users.Any())
+            {
+                var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<User>();
 
-			var clients = new Client[]
-			{
-				new Client
-				{
-					Name = "ООО Ромашка",
-					Inn = "7701234567",
-					ContactPerson = "Иванова Мария",
-					Phone = "+7-999-123-45-67",
-					Email = "romashka@mail.ru",
-					Address = "г. Москва, ул. Тверская, д. 1"
-				},
-				new Client
-				{
-					Name = "ИП Петров",
-					Inn = "7709876543",
-					ContactPerson = "Петров Сергей",
-					Phone = "+7-999-765-43-21",
-					Email = "petrov@bk.ru",
-					Address = "г. Москва, ул. Арбат, д. 10"
-				},
-				new Client
-				{
-					Name = "ООО ТехноСервис",
-					Inn = "7705555555",
-					ContactPerson = "Сидорова Анна",
-					Phone = "+7-999-111-22-33",
-					Email = "info@techno.ru",
-					Address = "г. Санкт-Петербург, Невский пр., д. 20"
-				}
-			};
-			context.Clients.AddRange(clients);
-			context.SaveChanges();
+                var admin = new User
+                {
+                    FullName = "Системный администратор",
+                    Username = "admin",
+                    Role = "Administrator",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
 
-			var products = new Product[]
-			{
-				new Product
-				{
-					Name = "Ноутбук Lenovo ThinkPad X1",
-					Category = "Электроника",
-					Price = 85000m,
-					Stock = 15,
-					Description = "Бизнес-ноутбук с процессором Intel Core i7, 16 ГБ ОЗУ, SSD 512 ГБ"
-				},
-				new Product
-				{
-					Name = "Принтер HP LaserJet Pro",
-					Category = "Оргтехника",
-					Price = 22000m,
-					Stock = 8,
-					Description = "Лазерный принтер для офиса, формат А4, двусторонняя печать"
-				},
-				new Product
-				{
-					Name = "Офисное кресло Ergohuman",
-					Category = "Мебель",
-					Price = 34000m,
-					Stock = 12,
-					Description = "Эргономичное кресло с регулировкой высоты и наклона спинки"
-				},
-				new Product
-				{
-					Name = "МФУ Kyocera ECOSYS M2635dn",
-					Category = "Оргтехника",
-					Price = 42000m,
-					Stock = 5,
-					Description = "Многофункциональное устройство (печать, сканирование, копирование) для малого офиса"
-				},
-				new Product
-				{
-					Name = "Стол офисный Комфорт-2",
-					Category = "Мебель",
-					Price = 18000m,
-					Stock = 20,
-					Description = "Прямой офисный стол с тумбой, ЛДСП, размер 1200x600 мм"
-				}
-			};
-			context.Products.AddRange(products);
-			context.SaveChanges();
+                admin.PasswordHash = hasher.HashPassword(admin, "Admin123!");
 
-			var offer = new CommercialOffer
-			{
-				OfferNumber = "КП-001",
-				Date = DateTime.Now.AddDays(-3),
-				ClientId = clients[0].Id, 
-				Status = "Отправлено",
-				TotalAmount = 0 
-			};
-			context.CommercialOffers.Add(offer);
-			context.SaveChanges();
+                context.Users.Add(admin);
+                context.SaveChanges();
+            }
 
-			var offerItems = new OfferItem[]
-			{
-				new OfferItem
-				{
-					CommercialOfferId = offer.Id,
-					ProductId = products[0].Id, 
-                    Quantity = 2,
-					Price = products[0].Price
-				},
-				new OfferItem
-				{
-					CommercialOfferId = offer.Id,
-					ProductId = products[1].Id, 
-                    Quantity = 1,
-					Price = products[1].Price
-				}
-			};
-			context.OfferItems.AddRange(offerItems);
-			context.SaveChanges();
+            if (!context.Clients.Any())
+            {
+                context.Clients.AddRange(
+                    new Client
+                    {
+                        Name = "ООО «Ромашка»",
+                        Email = "info@romashka.ru",
+                        Phone = "+7 (900) 000-00-01",
+                        Address = "Москва"
+                    },
+                    new Client
+                    {
+                        Name = "ООО «Вектор»",
+                        Email = "info@vector.ru",
+                        Phone = "+7 (900) 000-00-02",
+                        Address = "Санкт-Петербург"
+                    }
+                );
 
-			offer.TotalAmount = offerItems.Sum(i => i.Quantity * i.Price);
-			context.SaveChanges();
-		}
-	}
+                context.SaveChanges();
+            }
+        }
+    }
 }

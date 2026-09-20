@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using ContractorHub.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ContractorHub.Data;
 using ContractorHub.Models;
@@ -14,6 +16,7 @@ namespace ContractorHub.Controllers
 			_context = context;
 		}
 
+		[Authorize(Policy = PermissionPolicies.ClientsView)]
 		public async Task<IActionResult> Index(string searchString)
 		{
 			var clients = from c in _context.Clients select c;
@@ -30,12 +33,14 @@ namespace ContractorHub.Controllers
 			return View(await clients.ToListAsync());
 		}
 
+		[Authorize(Policy = PermissionPolicies.ClientsManage)]
 		public IActionResult Create()
 		{
 			return View();
 		}
 
 		[HttpPost]
+		[Authorize(Policy = PermissionPolicies.ClientsManage)]
 		public async Task<IActionResult> Create(Client client)
 		{
 			if (ModelState.IsValid)
@@ -50,7 +55,7 @@ namespace ContractorHub.Controllers
 					}
 				}
 
-				client.CreatedAt = DateTime.Now;
+				client.CreatedAt = DateTime.UtcNow;
 				_context.Clients.Add(client);
 				await _context.SaveChangesAsync();
 				TempData["Success"] = $"Клиент '{client.Name}' добавлен!";
@@ -59,6 +64,7 @@ namespace ContractorHub.Controllers
 			return View(client);
 		}
 
+		[Authorize(Policy = PermissionPolicies.ClientsManage)]
 		public async Task<IActionResult> Edit(int id)
 		{
 			var client = await _context.Clients.FindAsync(id);
@@ -71,6 +77,7 @@ namespace ContractorHub.Controllers
 		}
 
 		[HttpPost]
+		[Authorize(Policy = PermissionPolicies.ClientsManage)]
 		public async Task<IActionResult> Edit(int id, Client client)
 		{
 			if (id != client.Id)
@@ -113,6 +120,7 @@ namespace ContractorHub.Controllers
 		}
 
 		[HttpPost]
+		[Authorize(Policy = PermissionPolicies.ClientsManage)]
 		public async Task<IActionResult> Delete(int id)
 		{
 			var client = await _context.Clients.FindAsync(id);

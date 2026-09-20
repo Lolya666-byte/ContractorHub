@@ -1,125 +1,225 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ContractorHub.Data;
+using ContractorHub.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ContractorHub.Controllers
 {
-	public class DashboardController : Controller
-	{
-		private readonly AppDbContext _context;
+    public class DashboardController : Controller
+    {
+        private readonly AppDbContext _context;
+        private readonly IAuthorizationService _authorizationService;
 
-    public DashboardController(AppDbContext context)
-		{
-			_context = context;
-		}
+        public DashboardController(
+            AppDbContext context,
+            IAuthorizationService authorizationService)
+        {
+            _context = context;
+            _authorizationService = authorizationService;
+        }
 
-		public async Task<IActionResult> Index()
-		{
+        [Authorize(Policy = PermissionPolicies.DashboardView)]
+        public async Task<IActionResult> Index()
+        {
+            var canViewClients = (await _authorizationService
+                .AuthorizeAsync(User, PermissionPolicies.ClientsView)).Succeeded;
 
-			var totalOffers = await _context.CommercialOffers.CountAsync();
+            var canViewOffers = (await _authorizationService
+                .AuthorizeAsync(User, PermissionPolicies.OffersView)).Succeeded;
 
-			var approvedOffers = await _context.CommercialOffers
-				.CountAsync(o => o.Status == "Согласовано");
+            var canViewContracts = (await _authorizationService
+                .AuthorizeAsync(User, PermissionPolicies.ContractsView)).Succeeded;
 
-			var totalContracts = await _context.Contracts.CountAsync();
+            var canViewDeals = (await _authorizationService
+                .AuthorizeAsync(User, PermissionPolicies.DealsView)).Succeeded;
 
-			var activeContracts = await _context.Contracts
-				.CountAsync(c => c.Status == "Активен");
+            ViewBag.CanViewClients = canViewClients;
+            ViewBag.CanViewOffers = canViewOffers;
+            ViewBag.CanViewContracts = canViewContracts;
+            ViewBag.CanViewDeals = canViewDeals;
 
-			var totalContractAmount = (decimal)await _context.Contracts
-				.Select(c => (double)c.TotalAmount)
-				.SumAsync();
+            ViewBag.TotalOffers = canViewOffers
+                ? await _context.CommercialOffers.CountAsync()
+                : 0;
 
-			var totalOfferAmount = (decimal)await _context.CommercialOffers
-				.Select(o => (double)o.TotalAmount)
-				.SumAsync();
+            ViewBag.ApprovedOffers = canViewOffers
+                ? await _context.CommercialOffers.CountAsync(o => o.Status == "Согласовано")
+                : 0;
 
-			ViewBag.TotalOffers = totalOffers;
-			ViewBag.ApprovedOffers = approvedOffers;
-			ViewBag.TotalContracts = totalContracts;
-			ViewBag.ActiveContracts = activeContracts;
-			ViewBag.TotalContractAmount = totalContractAmount;
-			ViewBag.TotalOfferAmount = totalOfferAmount;
+            ViewBag.TotalContracts = canViewContracts
+                ? await _context.Contracts.CountAsync()
+                : 0;
 
-			var offersByMonth = await _context.CommercialOffers
-				.GroupBy(o => new
-				{
-					o.Date.Year,
-					o.Date.Month
-				})
-				.Select(g => new
-				{
-					g.Key.Year,
-					g.Key.Month,
-					Total = g.Sum(o => (double)o.TotalAmount)
-				})
-				.OrderBy(x => x.Year)
-				.ThenBy(x => x.Month)
-				.ToListAsync();
+            ViewBag.ActiveContracts = canViewContracts
+                ? await _context.Contracts.CountAsync(c => c.Status == "Активен")
+                : 0;
 
-			ViewBag.OfferLabels = offersByMonth
-				.Select(x => $"{x.Month:D2}.{x.Year}")
-				.ToList();
+            ViewBag.TotalContractAmount = canViewContracts
+                ? (decimal)await _context.Contracts
+                    .Select(c => (double)c.TotalAmount)
+                    .SumAsync()
+                : 0m;
 
-			ViewBag.OfferValues = offersByMonth
-				.Select(x => x.Total)
-				.ToList();
+            ViewBag.TotalDeals = canViewDeals
+                ? await _context.Deals.CountAsync()
+                : 0;
 
+            ViewBag.ActiveDeals = canViewDeals
+                ? await _context.Deals.CountAsync(d => d.Status != "Успешна" && d.Status != "Закрыта" && d.Status != "Отменена")
+                : 0;
 
-			var topClients = await _context.Contracts
-				.Include(c => c.Client)
-				.GroupBy(c => c.ClientId)
-				.Select(g => new
-				{
-					ClientName = g
-						.Select(x => x.Client != null
-							? x.Client.Name
-							: "Неизвестно")
-						.FirstOrDefault(),
+            ViewBag.ActiveDealAmount = canViewDeals
+                ? (decimal)await _context.Deals
+                    .Where(d => d.Status != "Успешна" && d.Status != "Закрыта" && d.Status != "Отменена")
+                    .Select(d => (double)d.Amount)
+                    .SumAsync()
+                : 0m;
 
-					Total = g.Sum(c => (double)c.TotalAmount)
-				})
-				.OrderByDescending(x => x.Total)
-				.Take(5)
-				.ToListAsync();
+            ViewBag.SuccessfulDealAmount = canViewDeals
+                ? (decimal)await _context.Deals
+                    .Where(d => d.Status == "Успешна")
+                    .Select(d => (double)d.Amount)
+                    .SumAsync()
+                : 0m;
 
-			ViewBag.ClientNames = topClients
-				.Select(x => x.ClientName ?? "Неизвестно")
-				.ToList();
+            ViewBag.TotalOfferAmount = canViewOffers
+                ? (decimal)await _context.CommercialOffers
+                    .Select(o => (double)o.TotalAmount)
+                    .SumAsync()
+                : 0m;
 
-			ViewBag.ClientTotals = topClients
-				.Select(x => x.Total)
-				.ToList();
+            if (canViewOffers)
+            {
+                var offersByMonth = await _context.CommercialOffers
+                    .GroupBy(o => new { o.Date.Year, o.Date.Month })
+                    .Select(g => new
+                    {
+                        g.Key.Year,
+                        g.Key.Month,
+                        Total = g.Sum(o => (double)o.TotalAmount)
+                    })
+                    .OrderBy(x => x.Year)
+                    .ThenBy(x => x.Month)
+                    .ToListAsync();
 
+                ViewBag.OfferLabels = offersByMonth
+                    .Select(x => $"{x.Month:D2}.{x.Year}")
+                    .ToList();
 
-			var contractStatuses = await _context.Contracts
-				.GroupBy(c => c.Status)
-				.Select(g => new
-				{
-					Status = g.Key,
-					Count = g.Count()
-				})
-				.ToListAsync();
+                ViewBag.OfferValues = offersByMonth
+                    .Select(x => x.Total)
+                    .ToList();
+            }
+            else
+            {
+                ViewBag.OfferLabels = new List<string>();
+                ViewBag.OfferValues = new List<double>();
+            }
 
-			var statuses = new[]
-			{
-			"Черновик",
-			"На подписи",
-			"Активен",
-			"Закрыт"
-		};
+            if (canViewClients && canViewContracts)
+            {
+                var topClients = await _context.Contracts
+                    .Include(c => c.Client)
+                    .GroupBy(c => c.ClientId)
+                    .Select(g => new
+                    {
+                        ClientName = g
+                            .Select(x => x.Client != null ? x.Client.Name : "Неизвестно")
+                            .FirstOrDefault(),
+                        Total = g.Sum(c => (double)c.TotalAmount)
+                    })
+                    .OrderByDescending(x => x.Total)
+                    .Take(5)
+                    .ToListAsync();
 
-			ViewBag.ContractStatusLabels = statuses;
+                ViewBag.ClientNames = topClients
+                    .Select(x => x.ClientName ?? "Неизвестно")
+                    .ToList();
 
-			ViewBag.ContractStatusValues = statuses
-				.Select(status =>
-					contractStatuses
-						.FirstOrDefault(x => x.Status == status)?.Count ?? 0)
-				.ToList();
+                ViewBag.ClientTotals = topClients
+                    .Select(x => x.Total)
+                    .ToList();
+            }
+            else
+            {
+                ViewBag.ClientNames = new List<string>();
+                ViewBag.ClientTotals = new List<double>();
+            }
 
+            if (canViewDeals)
+            {
+                var dealStatuses = new[]
+                {
+                    "Новая",
+                    "В работе",
+                    "КП подготовлено",
+                    "КП отправлено",
+                    "На согласовании",
+                    "Договор",
+                    "Успешна",
+                    "Закрыта",
+                    "Отменена"
+                };
 
-			return View();
-		}
-	}
+                var dealStatusCounts = await _context.Deals
+                    .GroupBy(d => d.Status)
+                    .Select(g => new { Status = g.Key, Count = g.Count() })
+                    .ToListAsync();
 
+                ViewBag.DealStatusLabels = dealStatuses;
+                ViewBag.DealStatusValues = dealStatuses
+                    .Select(status => dealStatusCounts.FirstOrDefault(x => x.Status == status)?.Count ?? 0)
+                    .ToList();
+            }
+            else
+            {
+                ViewBag.DealStatusLabels = new[]
+                {
+                    "Новая", "В работе", "КП подготовлено", "КП отправлено",
+                    "На согласовании", "Договор", "Успешна", "Закрыта", "Отменена"
+                };
+                ViewBag.DealStatusValues = new List<int>();
+            }
+
+            if (canViewContracts)
+            {
+                var contractStatuses = await _context.Contracts
+                    .GroupBy(c => c.Status)
+                    .Select(g => new
+                    {
+                        Status = g.Key,
+                        Count = g.Count()
+                    })
+                    .ToListAsync();
+
+                var statuses = new[]
+                {
+                    "Черновик",
+                    "На подписи",
+                    "Активен",
+                    "Закрыт"
+                };
+
+                ViewBag.ContractStatusLabels = statuses;
+                ViewBag.ContractStatusValues = statuses
+                    .Select(status => contractStatuses
+                        .FirstOrDefault(x => x.Status == status)?.Count ?? 0)
+                    .ToList();
+            }
+            else
+            {
+                ViewBag.ContractStatusLabels = new[]
+                {
+                    "Черновик",
+                    "На подписи",
+                    "Активен",
+                    "Закрыт"
+                };
+                ViewBag.ContractStatusValues = new List<int>();
+            }
+
+            return View();
+        }
+    }
 }

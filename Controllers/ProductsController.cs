@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using ContractorHub.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ContractorHub.Data;
 using ContractorHub.Models;
@@ -14,6 +16,7 @@ namespace ContractorHub.Controllers
 			_context = context;
 		}
 
+		[Authorize(Policy = PermissionPolicies.ProductsView)]
 		public async Task<IActionResult> Index(string searchString)
 		{
 			var products = from p in _context.Products select p;
@@ -28,12 +31,14 @@ namespace ContractorHub.Controllers
 			return View(await products.ToListAsync());
 		}
 
+		[Authorize(Policy = PermissionPolicies.ProductsManage)]
 		public IActionResult Create()
 		{
 			return View();
 		}
 
 		[HttpPost]
+		[Authorize(Policy = PermissionPolicies.ProductsManage)]
 		public async Task<IActionResult> Create(Product product)
 		{
 			if (ModelState.IsValid)
@@ -46,6 +51,7 @@ namespace ContractorHub.Controllers
 			return View(product);
 		}
 
+		[Authorize(Policy = PermissionPolicies.ProductsManage)]
 		public async Task<IActionResult> Edit(int id)
 		{
 			var product = await _context.Products.FindAsync(id);
@@ -58,6 +64,7 @@ namespace ContractorHub.Controllers
 		}
 
 		[HttpPost]
+		[Authorize(Policy = PermissionPolicies.ProductsManage)]
 		public async Task<IActionResult> Edit(int id, Product product)
 		{
 			if (id != product.Id)
@@ -88,6 +95,7 @@ namespace ContractorHub.Controllers
 			return View(product);
 		}
 		[HttpPost]
+		[Authorize(Policy = PermissionPolicies.ProductsManage)]
 		public async Task<IActionResult> Delete(int id)
 		{
 			var product = await _context.Products.FindAsync(id);
@@ -101,6 +109,7 @@ namespace ContractorHub.Controllers
 		}
 
 		[HttpPost]
+		[Authorize(Policy = PermissionPolicies.ProductsManage)]
 		public async Task<IActionResult> UpdateStock(int id, int newStock)
 		{
 			if (newStock < 0)

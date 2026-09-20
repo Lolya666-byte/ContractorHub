@@ -1,0 +1,157 @@
+@model ContractorHub.Models.User
+
+@{
+    ViewData["Title"] = "Редактирование сотрудника";
+}
+
+<div class="hub-users-page">
+
+    <header class="hub-users-header">
+        <div>
+            <div class="hub-users-eyebrow">
+                <span class="hub-users-eyebrow-dot"></span>
+                Управление доступом
+            </div>
+            <h1>Редактирование</h1>
+            <p>Измените данные, роль или состояние учётной записи сотрудника.</p>
+        </div>
+        <a asp-action="Index" class="hub-users-secondary-action"><i class="fas fa-arrow-left"></i> К сотрудникам</a>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(ViewBag.Error))
+    {
+        <div class="hub-users-alert hub-users-alert-error">
+            <i class="fas fa-circle-exclamation"></i>
+            <span>@ViewBag.Error</span>
+        </div>
+    }
+
+    <div class="hub-users-form-layout">
+        <section class="hub-users-form-panel">
+            <div class="hub-users-panel-header">
+                <div>
+                    <span class="hub-users-panel-kicker">Учётная запись #@Model.Id</span>
+                    <h2>Данные сотрудника</h2>
+                </div>
+                <span class="hub-users-form-index">01</span>
+            </div>
+
+            <form asp-action="Edit" method="post" class="hub-users-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+
+                <div class="hub-users-form-grid">
+                    <div class="hub-users-field hub-users-field-wide">
+                        <label for="fullName">ФИО сотрудника <span>*</span></label>
+                        <div class="hub-users-input">
+                            <i class="fas fa-user"></i>
+                            <input id="fullName" name="fullName" type="text"
+                                   value="@Model.FullName" maxlength="100" required />
+                        </div>
+                    </div>
+
+                    <div class="hub-users-field">
+                        <label for="username">Логин <span>*</span></label>
+                        <div class="hub-users-input">
+                            <i class="fas fa-at"></i>
+                            <input id="username" name="username" type="text"
+                                   value="@Model.Username" maxlength="100" required />
+                        </div>
+                        <small>Используется сотрудником для входа.</small>
+                    </div>
+
+                    <div class="hub-users-field">
+                        <label for="role">Роль <span>*</span></label>
+                        <div class="hub-users-input hub-users-select">
+                            <i class="fas fa-user-shield"></i>
+                            <select id="role" name="role" required onchange="updateRoleDescription()">
+                                <option value="Manager" selected="@(Model.Role == "Manager" ? "selected" : null)">Менеджер</option>
+                                <option value="Accountant" selected="@(Model.Role == "Accountant" ? "selected" : null)">Бухгалтер</option>
+                                <option value="Administrator" selected="@(Model.Role == "Administrator" ? "selected" : null)">Администратор</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="roleDescription" class="hub-users-role-description">
+                    <span><i class="fas fa-briefcase"></i></span>
+                    <div>
+                        <strong>Менеджер</strong>
+                        <p>Клиенты, товары, коммерческие предложения и договоры.</p>
+                    </div>
+                </div>
+
+                <div class="hub-users-status-editor">
+                    <div>
+                        <span class="hub-users-status-mark @(Model.IsActive ? "is-active" : "is-blocked")">
+                            <i class="fas @(Model.IsActive ? "fa-check" : "fa-xmark")"></i>
+                        </span>
+                        <section>
+                            <strong>@(Model.IsActive ? "Учётная запись активна" : "Учётная запись заблокирована")</strong>
+                            <span>@(Model.IsActive ? "Сотрудник может войти в систему." : "Вход в систему запрещён.")</span>
+                        </section>
+                    </div>
+
+                    <label class="hub-users-switch">
+                        <input type="checkbox" name="isActive" value="true" @(Model.IsActive ? "checked" : "") />
+                        <span></span>
+                    </label>
+                </div>
+
+                <div class="hub-users-form-divider"></div>
+
+                <div class="hub-users-form-actions">
+                    <a asp-action="ResetPassword" asp-route-id="@Model.Id" class="hub-users-secondary-action">
+                        <i class="fas fa-key"></i>
+                        Сбросить пароль
+                    </a>
+                    <a asp-action="Index" class="hub-users-secondary-action">Отмена</a>
+                    <button type="submit" class="hub-users-primary-action">
+                        <i class="fas fa-check"></i>
+                        Сохранить изменения
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="hub-users-info-panel">
+            <span class="hub-users-info-icon"><i class="fas fa-user-pen"></i></span>
+            <span class="hub-users-panel-kicker">Профиль сотрудника</span>
+            <h2>@Model.FullName</h2>
+            <p>Администратор управляет основными параметрами учётной записи.</p>
+
+            <div class="hub-users-meta-list">
+                <div><span>ID</span><strong>#@Model.Id</strong></div>
+                <div><span>Логин</span><strong>@Model.Username</strong></div>
+                <div><span>Роль</span><strong>@(Model.Role switch { "Administrator" => "Администратор", "Manager" => "Менеджер", "Accountant" => "Бухгалтер", _ => Model.Role })</strong></div>
+                <div><span>Создан</span><strong>@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</strong></div>
+            </div>
+
+            <div class="hub-users-note">
+                <i class="fas fa-circle-info"></i>
+                <span>Изменение роли применяется к следующему запросу сотрудника к системе.</span>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<script>
+    function updateRoleDescription() {
+        const role = document.getElementById("role").value;
+        const container = document.getElementById("roleDescription");
+        const icon = container.querySelector("span i");
+        const title = container.querySelector("strong");
+        const text = container.querySelector("p");
+
+        const roles = {
+            Manager: ["fa-briefcase", "Менеджер", "Клиенты, товары, коммерческие предложения и договоры."],
+            Accountant: ["fa-calculator", "Бухгалтер", "Клиенты, договоры и связанные рабочие разделы. Административного управления нет."],
+            Administrator: ["fa-shield-halved", "Администратор", "Полный доступ к системе, включая сотрудников, права и журнал активности."]
+        };
+
+        const selected = roles[role];
+        icon.className = "fas " + (selected?.[0] ?? "fa-circle-info");
+        title.textContent = selected?.[1] ?? "Выберите роль";
+        text.textContent = selected?.[2] ?? "Здесь появится описание доступных возможностей сотрудника.";
+    }
+</script>

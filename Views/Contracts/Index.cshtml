@@ -1,7 +1,9 @@
-﻿@model IEnumerable<ContractorHub.Models.Contract>
+@model IEnumerable<ContractorHub.Models.Contract>
 
 @{
     ViewData["Title"] = "Договоры";
+
+    bool canManageContracts = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.ContractsManage)).Succeeded;
 
 var contracts = Model?.ToList() ?? new List<ContractorHub.Models.Contract>();
 
@@ -224,44 +226,54 @@ var contracts = Model?.ToList() ?? new List<ContractorHub.Models.Contract>();
                             СТАТУС
                         </span>
 
-                        <form method="post"
-                              asp-controller="Contracts"
-                              asp-action="ChangeStatus"
-                              class="contracts-status-form">
+                        @if (canManageContracts)
+                        {
+                            <form method="post"
+                                  asp-controller="Contracts"
+                                  asp-action="ChangeStatus"
+                                  class="contracts-status-form">
 
-                            <input type="hidden"
-                                   name="id"
-                                   value="@contract.Id" />
+                                <input type="hidden"
+                                       name="id"
+                                       value="@contract.Id" />
 
-                            <div class="contracts-status-wrap @statusClass">
+                                <div class="contracts-status-wrap @statusClass">
 
+                                    <i class="fas @statusIcon"></i>
+
+                                    <select name="status"
+                                            onchange="this.form.submit()"
+                                            aria-label="Изменить статус договора">
+
+                                        <option value="Черновик" selected="@(contract.Status == "Черновик")">
+                                            Черновик
+                                        </option>
+
+                                        <option value="На подписи" selected="@(contract.Status == "На подписи")">
+                                            На подписи
+                                        </option>
+
+                                        <option value="Активен" selected="@(contract.Status == "Активен")">
+                                            Активен
+                                        </option>
+
+                                        <option value="Закрыт" selected="@(contract.Status == "Закрыт")">
+                                            Закрыт
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="contracts-status-wrap @statusClass" title="Изменение статуса недоступно">
                                 <i class="fas @statusIcon"></i>
-
-                                <select name="status"
-                                        onchange="this.form.submit()"
-                                        aria-label="Изменить статус договора">
-
-                                    <option value="Черновик" selected="@(contract.Status == "Черновик")">
-                                        Черновик
-                                    </option>
-
-                                    <option value="На подписи" selected="@(contract.Status == "На подписи")">
-                                        На подписи
-                                    </option>
-
-                                    <option value="Активен" selected="@(contract.Status == "Активен")">
-                                        Активен
-                                    </option>
-
-                                    <option value="Закрыт" selected="@(contract.Status == "Закрыт")">
-                                        Закрыт
-                                    </option>
-
-                                </select>
-
+                                <span>@contract.Status</span>
                             </div>
-
-                        </form>
+                        }
 
                     </div>
 
@@ -302,36 +314,39 @@ var contracts = Model?.ToList() ?? new List<ContractorHub.Models.Contract>();
                         </a>
 
 
-                        @if (contract.Status == "Закрыт")
+                        @if (canManageContracts)
                         {
-                            <form method="post"
-                                  asp-controller="Contracts"
-                                  asp-action="Delete"
-                                  class="contracts-delete-form">
+                            @if (contract.Status == "Закрыт")
+                            {
+                                <form method="post"
+                                      asp-controller="Contracts"
+                                      asp-action="Delete"
+                                      class="contracts-delete-form">
 
-                                <input type="hidden"
-                                       name="id"
-                                       value="@contract.Id" />
+                                    <input type="hidden"
+                                           name="id"
+                                           value="@contract.Id" />
 
-                                <button type="submit"
-                                        class="contracts-action contracts-action-delete"
-                                        onclick="return confirm('Удалить договор №@contract.ContractNumber?')"
-                                        title="Удалить закрытый договор">
+                                    <button type="submit"
+                                            class="contracts-action contracts-action-delete"
+                                            onclick="return confirm('Удалить договор №@contract.ContractNumber?')"
+                                            title="Удалить закрытый договор">
 
-                                    <i class="fas fa-trash"></i>
+                                        <i class="fas fa-trash"></i>
 
-                                </button>
+                                    </button>
 
-                            </form>
-                        }
-                        else
-                        {
-                            <span class="contracts-action contracts-action-locked"
-                                  title="Удаление доступно только для закрытых договоров">
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="contracts-action contracts-action-locked"
+                                      title="Удаление доступно только для закрытых договоров">
 
-                                <i class="fas fa-lock"></i>
+                                    <i class="fas fa-lock"></i>
 
-                            </span>
+                                </span>
+                            }
                         }
 
                     </div>

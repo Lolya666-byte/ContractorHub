@@ -1,10 +1,11 @@
-﻿@model IEnumerable<ContractorHub.Models.Product>
+@model IEnumerable<ContractorHub.Models.Product>
 
 @{
     ViewData["Title"] = "Товары";
 
     var products = Model?.ToList() ?? new List<ContractorHub.Models.Product>();
     var searchString = ViewContext.HttpContext.Request.Query["searchString"].ToString();
+    bool canManageProducts = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.ProductsManage)).Succeeded;
 
     string GetStockClass(int? stock)
     {
@@ -54,13 +55,16 @@
             </p>
         </div>
 
-        <a asp-action="Create"
-           class="products-create-button">
+        @if (canManageProducts)
+        {
+            <a asp-action="Create"
+               class="products-create-button">
 
-            <i class="fas fa-plus"></i>
-            Новый товар
+                <i class="fas fa-plus"></i>
+                Новый товар
 
-        </a>
+            </a>
+        }
 
     </section>
 
@@ -271,7 +275,7 @@
                                         </div>
 
 
-                                        @if (product.Stock.HasValue)
+                                        @if (canManageProducts && product.Stock.HasValue)
                                         {
                                             <form method="post"
                                                   asp-action="UpdateStock"
@@ -299,7 +303,7 @@
 
                                             </form>
                                         }
-                                        else
+                                        else if (canManageProducts)
                                         {
                                             <form method="post"
                                                   asp-action="UpdateStock"
@@ -327,6 +331,12 @@
 
                                             </form>
                                         }
+                                        else
+                                        {
+                                            <span class="product-stock-label @GetStockClass(product.Stock)">
+                                                @GetStockLabel(product.Stock)
+                                            </span>
+                                        }
 
                                     </div>
 
@@ -351,9 +361,11 @@
                                 </td>
 
 
-                                <td>
+                                @if (canManageProducts)
+                                {
+                                    <td>
 
-                                    <div class="product-actions">
+                                        <div class="product-actions">
 
                                         <a asp-action="Edit"
                                            asp-route-id="@product.Id"
@@ -424,9 +436,10 @@
 
                                         </div>
 
-                                    </div>
+                                        </div>
 
-                                </td>
+                                    </td>
+                                }
 
                             </tr>
                         }
@@ -470,13 +483,22 @@
                         Добавьте первый товар, чтобы начать формировать коммерческие предложения.
                     </p>
 
-                    <a asp-action="Create"
-                       class="products-empty-button">
+                    @if (canManageProducts)
+                    {
+                        <a asp-action="Create"
+                           class="products-empty-button">
 
-                        <i class="fas fa-plus"></i>
-                        Добавить товар
+                            <i class="fas fa-plus"></i>
+                            Добавить товар
 
-                    </a>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="products-empty-button" style="cursor:default;">
+                            Каталог пока пуст
+                        </span>
+                    }
                 }
 
             </div>

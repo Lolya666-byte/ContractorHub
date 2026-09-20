@@ -1,4 +1,6 @@
-﻿using ContractorHub.Data;
+using ContractorHub.Services;
+using ContractorHub.Data;
+using Microsoft.AspNetCore.Authorization;
 using ContractorHub.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,12 +15,15 @@ namespace ContractorHub.Controllers
 	public class ContractsController : Controller
 	{
 		private readonly AppDbContext _context;
+		private readonly AuditService _auditService;
 
-		public ContractsController(AppDbContext context)
+		public ContractsController(AppDbContext context, AuditService auditService)
 		{
 			_context = context;
+			_auditService = auditService;
 		}
 
+		[Authorize(Policy = PermissionPolicies.ContractsView)]
 		public async Task<IActionResult> Index(string searchString)
 		{
 			var contracts = from c in _context.Contracts
@@ -36,6 +41,8 @@ namespace ContractorHub.Controllers
 		}
 
 		[HttpPost]
+		[ValidateAntiForgeryToken]
+		[Authorize(Policy = PermissionPolicies.ContractsManage)]
 		public async Task<IActionResult> CreateFromOffer(int offerId)
 		{
 			var offer = await _context.CommercialOffers
@@ -59,8 +66,8 @@ namespace ContractorHub.Controllers
 
 			var contract = new Contract
 			{
-				ContractNumber = $"Д-{DateTime.Now:yyyyMMdd}-{offerId}",
-				Date = DateTime.Now,
+				ContractNumber = $"Д-{DateTime.UtcNow:yyyyMMdd}-{offerId}",
+				Date = DateTime.UtcNow,
 				ClientId = offer.ClientId,
 				CommercialOfferId = offer.Id,
 				TotalAmount = offer.TotalAmount,
@@ -72,12 +79,27 @@ namespace ContractorHub.Controllers
 			await _context.SaveChangesAsync();
 
 			offer.Status = "Согласовано";
+			var linkedDeal = await _context.Deals.FirstOrDefaultAsync(d => d.CommercialOfferId == offer.Id);
+			if (linkedDeal != null)
+			{
+				linkedDeal.ContractId = contract.Id;
+				if (linkedDeal.Status != "Успешна" && linkedDeal.Status != "Закрыта" && linkedDeal.Status != "Отменена")
+				{
+					var oldStatus = linkedDeal.Status;
+					linkedDeal.Status = "Договор";
+					linkedDeal.NextAction = "Получить подписанный договор";
+					linkedDeal.NextActionAt = DateTime.UtcNow.AddDays(3);
+					_context.DealHistories.Add(new DealHistory { DealId = linkedDeal.Id, FromStatus = oldStatus, ToStatus = linkedDeal.Status, Comment = $"Создан договор №{contract.ContractNumber}.", ChangedByUserId = GetCurrentUserId(), CreatedAt = DateTime.UtcNow });
+				}
+			}
 			await _context.SaveChangesAsync();
+			await LogAuditAsync("CreateContract", $"Создан договор №{contract.ContractNumber} на сумму {contract.TotalAmount:N2} руб. на основе КП №{offer.OfferNumber}.", "Contract", contract.Id);
 
 			TempData["Success"] = $"Договор №{contract.ContractNumber} создан на сумму {contract.TotalAmount:N2} руб.";
 			return RedirectToAction("Index");
 		}
 		[HttpPost]
+		[Authorize(Policy = PermissionPolicies.ContractsManage)]
 		public async Task<IActionResult> ChangeStatus(int id, string status)
 		{
 			var contract = await _context.Contracts.FindAsync(id);
@@ -89,16 +111,41 @@ namespace ContractorHub.Controllers
 
 			contract.Status = status;
 
+			var linkedDeal = await _context.Deals.FirstOrDefaultAsync(d => d.ContractId == contract.Id);
+			if (linkedDeal != null && linkedDeal.Status != "Закрыта" && linkedDeal.Status != "Отменена")
+			{
+				var oldStatus = linkedDeal.Status;
+				var mappedStatus = status switch
+				{
+					"Активен" => "Успешна",
+					"Закрыт" => "Закрыта",
+					_ => "Договор"
+				};
+				linkedDeal.Status = mappedStatus;
+				linkedDeal.NextAction = mappedStatus is "Успешна" or "Закрыта" ? null : "Получить подписанный договор";
+				linkedDeal.NextActionAt = mappedStatus is "Успешна" or "Закрыта" ? null : DateTime.UtcNow.AddDays(2);
+				if (oldStatus != mappedStatus)
+					_context.DealHistories.Add(new DealHistory { DealId = linkedDeal.Id, FromStatus = oldStatus, ToStatus = mappedStatus, Comment = $"Статус сделки обновлён по договору №{contract.ContractNumber}.", ChangedByUserId = GetCurrentUserId(), CreatedAt = DateTime.UtcNow });
+			}
+
 			if (status == "Активен" && contract.SignedDate == null)
 			{
-				contract.SignedDate = DateTime.Now;
+				contract.SignedDate = DateTime.UtcNow;
 			}
 
 			await _context.SaveChangesAsync();
+			await LogAuditAsync("ChangeContractStatus", $"Для договора №{contract.ContractNumber} установлен статус «{status}».", "Contract", contract.Id);
 			TempData["Success"] = $"Статус договора №{contract.ContractNumber} изменён на '{status}'";
 			return RedirectToAction("Index");
 		}
+		private int? GetCurrentUserId()
+		{
+			var value = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+			return int.TryParse(value, out var id) ? id : null;
+		}
+
 		[HttpGet]
+		[Authorize(Policy = PermissionPolicies.ContractsView)]
 		public async Task<IActionResult> DownloadContract(int id)
 		{
 			var contract = await _context.Contracts
@@ -199,9 +246,12 @@ namespace ContractorHub.Controllers
 
 			var pdfBytes = document.GeneratePdf();
 
+			await LogAuditAsync("DownloadContract", $"Скачан PDF договора №{contract.ContractNumber}.", "Contract", contract.Id);
+
 			return File(pdfBytes, "application/pdf", $"Договор_{contract.ContractNumber}_{DateTime.Now:yyyyMMdd}.pdf");
 		}
 		[HttpPost]
+		[Authorize(Policy = PermissionPolicies.ContractsManage)]
 		public async Task<IActionResult> Delete(int id)
 		{
 			var contract = await _context.Contracts
@@ -225,11 +275,21 @@ namespace ContractorHub.Controllers
 				contract.CommercialOffer.Status = "Отправлено"; 
 			}
 
+			var deletedContractNumber = contract.ContractNumber;
 			_context.Contracts.Remove(contract);
 			await _context.SaveChangesAsync();
+			await LogAuditAsync("DeleteContract", $"Удалён договор №{deletedContractNumber}. Статус КП восстановлен.", "Contract", id);
 
-			TempData["Success"] = $"Договор №{contract.ContractNumber} удалён. Статус КП восстановлен.";
+			TempData["Success"] = $"Договор №{deletedContractNumber} удалён. Статус КП восстановлен.";
 			return RedirectToAction("Index");
 		}
+
+		private async Task LogAuditAsync(string action, string description, string entityType, int? entityId)
+		{
+			var userIdValue = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+			int? userId = int.TryParse(userIdValue, out var parsedId) ? parsedId : null;
+			await _auditService.LogAsync(userId, User.Identity?.Name, action, description, entityType, entityId);
+		}
+
 	}
 }

@@ -1,0 +1,92 @@
+@model ContractorHub.Models.Deal
+
+@{ ViewData["Title"] = "Новая сделка"; }
+
+<div class="deal-form-page">
+    <section class="deal-form-header">
+        <div>
+            <div class="deal-form-eyebrow">СДЕЛКИ / ПРОДАЖИ</div>
+            <h1>Новая сделка</h1>
+            <p>Заполните основные данные сделки и свяжите её с документами.</p>
+        </div>
+        <a asp-action="Index" class="offer-form-back"><i class="fas fa-arrow-left"></i> К списку сделок</a>
+    </section>
+
+    <form asp-action="Create" asp-route-id="@Model.Id" method="post" class="deal-builder">
+        <div class="deal-builder-main">
+            <section class="deal-builder-card">
+                <div class="deal-builder-card-header">
+                    <div><span class="deal-builder-kicker">01</span><h2>Основная информация</h2><p>Клиент, ответственный, сумма и текущий этап сделки.</p></div>
+                    <span class="deal-builder-icon"><i class="fas fa-handshake"></i></span>
+                </div>
+                <div class="deal-form-grid">
+                    <div class="deal-form-field"><label asp-for="DealNumber">Номер сделки</label><input asp-for="DealNumber" class="deal-input" /><span asp-validation-for="DealNumber" class="deal-form-error"></span></div>
+                    <div class="deal-form-field"><label asp-for="Status">Статус</label><select asp-for="Status" class="deal-input"><option>Новая</option><option>В работе</option><option>КП подготовлено</option><option>КП отправлено</option><option>На согласовании</option><option>Договор</option><option>Успешна</option><option>Закрыта</option><option>Отменена</option></select></div>
+                    <div class="deal-form-field"><label asp-for="ClientId">Клиент</label><select asp-for="ClientId" class="deal-input"><option value="">Выберите клиента</option>@foreach (var x in ViewBag.Clients) {<option value="@x.Id">@x.Name</option>}</select><span asp-validation-for="ClientId" class="deal-form-error"></span></div>
+                    <div class="deal-form-field"><label asp-for="ResponsibleUserId">Ответственный</label><select asp-for="ResponsibleUserId" class="deal-input"><option value="">Не назначен</option>@foreach (var x in ViewBag.Users) {<option value="@x.Id">@x.FullName</option>}</select></div>
+                    <div class="deal-form-field"><label asp-for="Amount">Сумма</label><input asp-for="Amount" class="deal-input" data-deal-amount readonly="@(Model.CommercialOfferId.HasValue ? "readonly" : null)" /><small class="deal-form-hint">Если выбрано КП, сумма берётся из него автоматически.</small><span asp-validation-for="Amount" class="deal-form-error"></span></div>
+                </div>
+            </section>
+
+            <section class="deal-builder-card">
+                <div class="deal-builder-card-header">
+                    <div><span class="deal-builder-kicker">02</span><h2>Связанные документы</h2><p>Привяжите коммерческое предложение и договор, относящиеся к сделке.</p></div>
+                    <span class="deal-builder-icon"><i class="fas fa-link"></i></span>
+                </div>
+                <div class="deal-form-grid">
+                    <div class="deal-form-field"><label asp-for="CommercialOfferId">Коммерческое предложение</label><select asp-for="CommercialOfferId" class="deal-input" data-deal-offer><option value="">Не выбрано</option>@foreach (var x in ViewBag.Offers) {<option value="@x.Id" data-total="@x.TotalAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)">@x.OfferNumber — @x.TotalAmount.ToString("N0") ₽</option>}</select></div>
+                    <div class="deal-form-field"><label asp-for="ContractId">Договор</label><select asp-for="ContractId" class="deal-input"><option value="">Не выбран</option>@foreach (var x in ViewBag.Contracts) {<option value="@x.Id">@x.ContractNumber</option>}</select></div>
+                </div>
+            </section>
+
+            <section class="deal-builder-card">
+                <div class="deal-builder-card-header">
+                    <div><span class="deal-builder-kicker">03</span><h2>Следующее действие</h2><p>Что нужно сделать дальше и когда.</p></div>
+                    <span class="deal-builder-icon"><i class="fas fa-list-check"></i></span>
+                </div>
+                <div class="deal-form-grid">
+                    <div class="deal-form-field"><label asp-for="NextAction">Следующее действие</label><input asp-for="NextAction" class="deal-input" placeholder="Например: связаться с клиентом" /></div>
+                    <div class="deal-form-field"><label asp-for="NextActionAt">Дата следующего действия</label><input name="NextActionAt" type="datetime-local" class="deal-input" value="@(Model.NextActionAt.HasValue ? Model.NextActionAt.Value.ToLocalTime().ToString("yyyy-MM-ddTHH:mm") : "")" /></div>
+                </div>
+            </section>
+
+            <section class="deal-builder-card">
+                <div class="deal-builder-card-header">
+                    <div><span class="deal-builder-kicker">04</span><h2>Комментарий</h2></div>
+                    <span class="deal-builder-icon"><i class="fas fa-note-sticky"></i></span>
+                </div>
+                <div class="deal-form-field"><textarea asp-for="Notes" class="deal-input deal-textarea" rows="5" placeholder="Дополнительная информация по сделке..."></textarea><span asp-validation-for="Notes" class="deal-form-error"></span></div>
+            </section>
+        </div>
+
+        <aside class="deal-builder-side">
+            <div class="deal-side-card">
+                <div class="deal-side-title">Действия</div>
+                <div class="deal-form-actions">
+                    <button class="deal-save" type="submit"><i class="fas fa-check"></i> Создать сделку</button>
+                    <a asp-action="Index" class="offer-cancel">Отмена</a>
+                </div>
+            </div>
+        </aside>
+    </form>
+</div>
+
+<script>
+(function () {
+    const offerSelect = document.querySelector('[data-deal-offer]');
+    const amountInput = document.querySelector('[data-deal-amount]');
+    if (!offerSelect || !amountInput) return;
+
+    function syncAmount() {
+        const option = offerSelect.options[offerSelect.selectedIndex];
+        const hasOffer = !!offerSelect.value;
+        amountInput.readOnly = hasOffer;
+        if (hasOffer) {
+            amountInput.value = option?.dataset.total || '0';
+        }
+    }
+
+    offerSelect.addEventListener('change', syncAmount);
+    syncAmount();
+})();
+</script>

@@ -1,0 +1,64 @@
+@model IEnumerable<ContractorHub.Models.User>
+
+@{
+    ViewData["Title"] = "Сотрудники";
+    var users = Model?.ToList() ?? new List<ContractorHub.Models.User>();
+    var currentUserId = int.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var parsedId) ? parsedId : 0;
+}
+
+<div class="hub-users-page">
+    <section class="hub-users-header">
+        <div>
+            <div class="hub-users-eyebrow">УПРАВЛЕНИЕ ДОСТУПОМ</div>
+            <h1>Сотрудники <span style="display:inline-flex;vertical-align:middle;align-items:center;justify-content:center;min-width:32px;height:24px;padding:0 8px;background:rgba(26,58,92,.07);color:var(--accent-blue);font-size:10px;font-weight:700;letter-spacing:0;">@users.Count</span></h1>
+            <p>Учётные записи, роли и состояние доступа к Contractor Hub.</p>
+        </div>
+        <a asp-action="Create" class="hub-users-primary-action"><i class="fas fa-plus"></i><span>Новый сотрудник</span></a>
+    </section>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="hub-users-alert"><i class="fas fa-exclamation"></i><span>@TempData["Error"]</span></div>
+    }
+
+    <section class="hub-users-panel">
+        <div class="hub-users-panel-header">
+            <div><span class="hub-users-panel-kicker">УЧЁТНЫЕ ЗАПИСИ</span><h2>Список сотрудников</h2></div>
+            <span class="hub-users-panel-count">Всего: <strong>@users.Count</strong></span>
+        </div>
+
+        @if (users.Any())
+        {
+            <div class="hub-users-table-wrap">
+                <table class="hub-users-table">
+                    <thead><tr><th>Сотрудник</th><th>Логин</th><th>Роль</th><th>Статус</th><th>Добавлен</th><th class="hub-users-actions-col"></th></tr></thead>
+                    <tbody>
+                    @foreach (var user in users)
+                    {
+                        var roleName = user.Role switch { "Administrator" => "Администратор", "Manager" => "Менеджер", "Accountant" => "Бухгалтер", _ => user.Role };
+                        var roleClass = user.Role switch { "Administrator" => "admin", "Manager" => "manager", "Accountant" => "accountant", _ => "default" };
+                        <tr>
+                            <td><div class="hub-users-person"><span class="hub-users-avatar"><i class="fas fa-user"></i></span><span class="hub-users-person-copy"><strong>@user.FullName</strong><small>ID @user.Id</small></span></div></td>
+                            <td><span class="hub-users-username">@user.Username</span></td>
+                            <td><span class="hub-users-role hub-users-role-@roleClass">@if(user.Role == "Administrator"){<i class="fas fa-shield-halved"></i>} else if(user.Role == "Manager"){<i class="fas fa-briefcase"></i>} else {<i class="fas fa-calculator"></i>} @roleName</span></td>
+                            <td><span class="hub-users-status @(user.IsActive ? "is-active" : "is-blocked")"><span></span>@(user.IsActive ? "Активен" : "Заблокирован")</span></td>
+                            <td><span class="hub-users-date">@user.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span></td>
+                            <td><div class="hub-users-row-actions">
+                                <a asp-action="Edit" asp-route-id="@user.Id" class="hub-users-icon-action" title="Редактировать"><i class="fas fa-pen"></i></a>
+                                @if(user.Id != currentUserId)
+                                {
+                                    <form asp-action="ToggleActive" asp-route-id="@user.Id" method="post" class="hub-users-inline-form">@Html.AntiForgeryToken()<button type="submit" class="hub-users-icon-action @(user.IsActive ? "is-danger" : "is-success")" title="@(user.IsActive ? "Заблокировать" : "Активировать")"><i class="fas @(user.IsActive ? "fa-user-slash" : "fa-user-check")"></i></button></form>
+                                }
+                            </div></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="hub-users-empty"><div class="hub-users-empty-icon"><i class="fas fa-user-slash"></i></div><h3>Сотрудников пока нет</h3><p>Создайте первую учётную запись, чтобы открыть доступ к системе.</p><a asp-action="Create" class="hub-users-secondary-action"><i class="fas fa-plus"></i> Новый сотрудник</a></div>
+        }
+    </section>
+</div>

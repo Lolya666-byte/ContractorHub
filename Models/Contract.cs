@@ -7,7 +7,7 @@ namespace ContractorHub.Models
 		[Key]
 		public int Id { get; set; }
 		public string ContractNumber { get; set; } = string.Empty;
-		public DateTime Date { get; set; } = DateTime.Now;
+		public DateTime Date { get; set; } = DateTime.UtcNow;
 		public int ClientId { get; set; }
 		public Client? Client { get; set; }
 		public int? CommercialOfferId { get; set; }

@@ -1,0 +1,182 @@
+@{
+    ViewData["Title"] = "Новый сотрудник";
+}
+
+<div class="hub-users-page">
+
+    <header class="hub-users-header">
+        <div>
+            <div class="hub-users-eyebrow">
+                <span class="hub-users-eyebrow-dot"></span>
+                Управление доступом
+            </div>
+            <h1>Новый сотрудник</h1>
+            <p>Создайте учётную запись и сразу назначьте уровень доступа.</p>
+        </div>
+        <a asp-action="Index" class="hub-users-secondary-action"><i class="fas fa-arrow-left"></i> К сотрудникам</a>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(ViewBag.Error))
+    {
+        <div class="hub-users-alert hub-users-alert-error">
+            <i class="fas fa-circle-exclamation"></i>
+            <span>@ViewBag.Error</span>
+        </div>
+    }
+
+    <div class="hub-users-form-layout">
+        <section class="hub-users-form-panel">
+            <div class="hub-users-panel-header">
+                <div>
+                    <span class="hub-users-panel-kicker">Учётная запись</span>
+                    <h2>Данные сотрудника</h2>
+                </div>
+                <span class="hub-users-form-index">01</span>
+            </div>
+
+            <form asp-action="Create" method="post" class="hub-users-form">
+                @Html.AntiForgeryToken()
+
+                <div class="hub-users-form-grid">
+                    <div class="hub-users-field hub-users-field-wide">
+                        <label for="fullName">ФИО <span>*</span></label>
+                        <div class="hub-users-input">
+                            <i class="fas fa-id-card"></i>
+                            <input id="fullName" name="fullName" type="text"
+                                   placeholder="Например: Иванов Иван Иванович"
+                                   autocomplete="name" maxlength="100" required />
+                        </div>
+                        <small>Полное имя будет отображаться в интерфейсе.</small>
+                    </div>
+
+                    <div class="hub-users-field">
+                        <label for="username">Логин <span>*</span></label>
+                        <div class="hub-users-input">
+                            <i class="fas fa-at"></i>
+                            <input id="username" name="username" type="text"
+                                   placeholder="Например: ivanov"
+                                   autocomplete="username" maxlength="100" required />
+                        </div>
+                        <small>Используется для входа в систему.</small>
+                    </div>
+
+                    <div class="hub-users-field">
+                        <label for="password">Пароль <span>*</span></label>
+                        <div class="hub-users-input">
+                            <i class="fas fa-lock"></i>
+                            <input id="password" name="password" type="password"
+                                   placeholder="Введите пароль"
+                                   autocomplete="new-password" minlength="8" required />
+                            <button type="button" class="hub-users-password-toggle"
+                                    onclick="togglePassword('password', this)"
+                                    title="Показать пароль"
+                                    aria-label="Показать пароль">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <small>Минимум 8 символов, заглавная и строчная буква, цифра.</small>
+                    </div>
+
+                    <div class="hub-users-field hub-users-field-wide">
+                        <label for="role">Роль <span>*</span></label>
+                        <div class="hub-users-input hub-users-select">
+                            <i class="fas fa-user-shield"></i>
+                            <select id="role" name="role" required onchange="updateRoleDescription()">
+                                <option value="">Выберите роль</option>
+                                <option value="Manager">Менеджер</option>
+                                <option value="Accountant">Бухгалтер</option>
+                                <option value="Administrator">Администратор</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="roleDescription" class="hub-users-role-description">
+                    <span><i class="fas fa-circle-info"></i></span>
+                    <div>
+                        <strong>Выберите роль</strong>
+                        <p>Здесь появится описание доступных возможностей сотрудника.</p>
+                    </div>
+                </div>
+
+                <div class="hub-users-form-divider"></div>
+
+                <div class="hub-users-form-actions">
+                    <a asp-action="Index" class="hub-users-secondary-action">Отмена</a>
+                    <button type="submit" class="hub-users-primary-action">
+                        <i class="fas fa-user-plus"></i>
+                        Создать сотрудника
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="hub-users-info-panel">
+            <span class="hub-users-info-icon"><i class="fas fa-shield-halved"></i></span>
+            <span class="hub-users-panel-kicker">Права доступа</span>
+            <h2>Роли в системе</h2>
+            <p>Роль определяет доступные разделы и операции сотрудника.</p>
+
+            <div class="hub-users-role-info">
+                <div><i class="fas fa-briefcase"></i></div>
+                <section><strong>Менеджер</strong><span>Клиенты, товары, коммерческие предложения и договоры.</span></section>
+            </div>
+            <div class="hub-users-role-info">
+                <div><i class="fas fa-calculator"></i></div>
+                <section><strong>Бухгалтер</strong><span>Клиенты, договоры и связанные рабочие разделы.</span></section>
+            </div>
+            <div class="hub-users-role-info">
+                <div><i class="fas fa-shield-halved"></i></div>
+                <section><strong>Администратор</strong><span>Полный доступ, сотрудники, права и журнал активности.</span></section>
+            </div>
+
+            <div class="hub-users-note">
+                <i class="fas fa-lock"></i>
+                <span>Пароль хранится в базе данных только в виде защищённого хеша.</span>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<script>
+    function togglePassword(id, button) {
+        const input = document.getElementById(id);
+        const icon = button.querySelector("i");
+        const visible = input.type === "password";
+        input.type = visible ? "text" : "password";
+        icon.classList.toggle("fa-eye", !visible);
+        icon.classList.toggle("fa-eye-slash", visible);
+        button.setAttribute("aria-label", visible ? "Скрыть пароль" : "Показать пароль");
+    }
+
+    function updateRoleDescription() {
+        const role = document.getElementById("role").value;
+        const container = document.getElementById("roleDescription");
+        const icon = container.querySelector("span i");
+        const title = container.querySelector("strong");
+        const text = container.querySelector("p");
+
+        const roles = {
+            Manager: {
+                icon: "fa-briefcase",
+                title: "Менеджер",
+                text: "Клиенты, товары, коммерческие предложения и договоры."
+            },
+            Accountant: {
+                icon: "fa-calculator",
+                title: "Бухгалтер",
+                text: "Клиенты, договоры и связанные рабочие разделы. Административного управления нет."
+            },
+            Administrator: {
+                icon: "fa-shield-halved",
+                title: "Администратор",
+                text: "Полный доступ к системе, включая сотрудников, права и журнал активности."
+            }
+        };
+
+        const selected = roles[role];
+        icon.className = "fas " + (selected?.icon ?? "fa-circle-info");
+        title.textContent = selected?.title ?? "Выберите роль";
+        text.textContent = selected?.text ?? "Здесь появится описание доступных возможностей сотрудника.";
+    }
+</script>

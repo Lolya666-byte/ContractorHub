@@ -1,10 +1,11 @@
-﻿@model IEnumerable<ContractorHub.Models.Client>
+@model IEnumerable<ContractorHub.Models.Client>
 
 @{
     ViewData["Title"] = "Клиенты";
 
     var clients = Model?.ToList() ?? new List<ContractorHub.Models.Client>();
     var searchString = ViewContext.HttpContext.Request.Query["searchString"].ToString();
+    bool canManageClients = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.ClientsManage)).Succeeded;
 
     string GetInitials(string? name)
     {
@@ -46,15 +47,18 @@
         </div>
 
 
-        <a asp-controller="Clients"
-           asp-action="Create"
-           class="clients-create-button">
+        @if (canManageClients)
+        {
+            <a asp-controller="Clients"
+               asp-action="Create"
+               class="clients-create-button">
 
-            <i class="fas fa-plus"></i>
+                <i class="fas fa-plus"></i>
 
-            <span>Новый клиент</span>
+                <span>Новый клиент</span>
 
-        </a>
+            </a>
+        }
 
     </section>
 
@@ -190,8 +194,11 @@
                                 Добавлен
                             </th>
 
-                            <th class="clients-actions-column">
-                            </th>
+                            @if (canManageClients)
+                            {
+                                <th class="clients-actions-column">
+                                </th>
+                            }
                         </tr>
                     </thead>
 
@@ -314,9 +321,11 @@
                                 </td>
 
 
-                                <td>
+                                @if (canManageClients)
+                                {
+                                    <td>
 
-                                    <div class="client-actions">
+                                        <div class="client-actions">
 
                                         <a asp-controller="Clients"
                                            asp-action="Edit"
@@ -385,9 +394,10 @@
 
                                         </div>
 
-                                    </div>
+                                        </div>
 
-                                </td>
+                                    </td>
+                                }
 
                             </tr>
                         }
@@ -429,12 +439,21 @@
                         Добавьте первую компанию, чтобы начать работу с клиентской базой.
                     </p>
 
-                    <a asp-controller="Clients"
-                       asp-action="Create"
-                       class="clients-empty-button">
-                        <i class="fas fa-plus"></i>
-                        Добавить клиента
-                    </a>
+                    @if (canManageClients)
+                    {
+                        <a asp-controller="Clients"
+                           asp-action="Create"
+                           class="clients-empty-button">
+                            <i class="fas fa-plus"></i>
+                            Добавить клиента
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="clients-empty-button" style="cursor:default;">
+                            Клиентская база пока пуста
+                        </span>
+                    }
                 }
 
             </div>

@@ -1,10 +1,12 @@
-﻿@model IEnumerable<ContractorHub.Models.CommercialOffer>
+@model IEnumerable<ContractorHub.Models.CommercialOffer>
 
 @{
     ViewData["Title"] = "Коммерческие предложения";
 
     var offers = Model?.ToList() ?? new List<ContractorHub.Models.CommercialOffer>();
     var searchString = ViewContext.HttpContext.Request.Query["searchString"].ToString();
+    bool canManageOffers = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.OffersManage)).Succeeded;
+    bool canManageContracts = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.ContractsManage)).Succeeded;
 
     string GetStatusClass(string status)
     {
@@ -41,14 +43,17 @@
         </div>
 
 
-        <a asp-controller="CommercialOffers"
-           asp-action="Create"
-           class="offers-create-button">
+        @if (canManageOffers)
+        {
+            <a asp-controller="CommercialOffers"
+               asp-action="Create"
+               class="offers-create-button">
 
-            <i class="fas fa-plus"></i>
-            Новое КП
+                <i class="fas fa-plus"></i>
+                Новое КП
 
-        </a>
+            </a>
+        }
 
     </section>
 
@@ -277,9 +282,11 @@
 
                                 <td>
 
-                                    <div class="offer-actions">
+                                    @if (canManageOffers || (canManageContracts && offer.Status == "Отправлено"))
+                                    {
+                                        <div class="offer-actions">
 
-                                        @if (offer.Status != "Согласовано")
+                                        @if (canManageOffers && offer.Status != "Согласовано")
                                         {
                                             <a asp-controller="CommercialOffers"
                                                asp-action="Edit"
@@ -291,7 +298,7 @@
 
                                             </a>
                                         }
-                                        else
+                                        else if (canManageOffers)
                                         {
                                             <span class="offer-action-locked"
                                                   title="Согласованное КП нельзя редактировать">
@@ -302,6 +309,8 @@
                                         }
 
 
+                                        @if (canManageOffers || (canManageContracts && offer.Status == "Отправлено"))
+                                        {
                                         <div class="dropdown">
 
                                             <button type="button"
@@ -322,7 +331,7 @@
                                                 </li>
 
 
-                                                @if (offer.Status != "Согласовано")
+                                                @if (canManageOffers && offer.Status != "Согласовано")
                                                 {
                                                     <li>
                                                         <a class="dropdown-item"
@@ -338,6 +347,21 @@
                                                 }
 
 
+                                                <li>
+                                                    <a class="dropdown-item"
+                                                       asp-controller="CommercialOffers"
+                                                       asp-action="DownloadOffer"
+                                                       asp-route-id="@offer.Id">
+
+                                                        <i class="fas fa-file-pdf"></i>
+                                                        Скачать PDF
+
+                                                    </a>
+                                                </li>
+
+
+                                                @if (canManageOffers)
+                                                {
                                                 <li class="offer-status-menu">
 
                                                     <span class="offer-dropdown-label">
@@ -380,9 +404,10 @@
                                                     </form>
 
                                                 </li>
+                                                }
 
 
-                                                @if (offer.Status == "Отправлено")
+                                                @if (canManageContracts && offer.Status == "Отправлено")
                                                 {
                                                     <li>
                                                         <form method="post"
@@ -401,6 +426,30 @@
 
                                                             </button>
 
+                                                        </form>
+                                                    </li>
+                                                }
+
+
+                                                @if (canManageOffers && !hasContract)
+                                                {
+                                                    <li>
+                                                        <form method="post"
+                                                              asp-controller="CommercialOffers"
+                                                              asp-action="Delete">
+
+                                                            <input type="hidden"
+                                                                   name="id"
+                                                                   value="@offer.Id" />
+
+                                                            <button type="submit"
+                                                                    class="dropdown-item offer-delete-item"
+                                                                    onclick="return confirm('Удалить КП №@offer.OfferNumber? Товары из КП будут возвращены на склад.');">
+
+                                                                <i class="fas fa-trash"></i>
+                                                                Удалить КП
+
+                                                            </button>
                                                         </form>
                                                     </li>
                                                 }
@@ -425,7 +474,7 @@
                                                 }
 
 
-                                                @if (offer.Status == "Согласовано" && !hasContract)
+                                                @if (canManageOffers && offer.Status == "Согласовано" && !hasContract)
                                                 {
                                                     <li>
 
@@ -454,8 +503,10 @@
                                             </ul>
 
                                         </div>
+                                        }
 
                                     </div>
+                                    }
 
                                 </td>
 
@@ -499,11 +550,14 @@
                         Создайте первое КП, чтобы начать работу с продажами.
                     </p>
 
-                    <a asp-action="Create"
-                       class="offers-empty-button">
-                        <i class="fas fa-plus"></i>
-                        Создать первое КП
-                    </a>
+                    @if (canManageOffers)
+                    {
+                        <a asp-action="Create"
+                           class="offers-empty-button">
+                            <i class="fas fa-plus"></i>
+                            Создать первое КП
+                        </a>
+                    }
                 }
 
             </div>

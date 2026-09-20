@@ -1,0 +1,121 @@
+@model ContractorHub.Models.PermissionMatrixViewModel
+
+@{
+    ViewData["Title"] = "Права доступа";
+    var roleNames = new Dictionary<string, string>
+    {
+        ["Administrator"] = "Администратор",
+        ["Manager"] = "Менеджер",
+        ["Accountant"] = "Бухгалтер"
+    };
+
+    var roleIcons = new Dictionary<string, string>
+    {
+        ["Administrator"] = "fa-shield-halved",
+        ["Manager"] = "fa-briefcase",
+        ["Accountant"] = "fa-calculator"
+    };
+}
+
+<div class="hub-permissions-page">
+    <section class="hub-permissions-header">
+        <div>
+            <div class="hub-permissions-eyebrow">УПРАВЛЕНИЕ ДОСТУПОМ</div>
+            <h1>Права доступа</h1>
+            <p>Настройте, какие разделы и операции доступны каждой роли.</p>
+        </div>
+        <a asp-controller="Users" asp-action="Index" class="hub-permissions-secondary-action">
+            <i class="fas fa-arrow-left"></i>
+            <span>К сотрудникам</span>
+        </a>
+    </section>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="hub-permissions-alert hub-permissions-alert-success">
+            <i class="fas fa-circle-check"></i>
+            <span>@TempData["Success"]</span>
+        </div>
+    }
+
+    <form asp-action="Save" method="post" class="hub-permissions-form">
+        @Html.AntiForgeryToken()
+
+        <section class="hub-permissions-panel">
+            <div class="hub-permissions-panel-head">
+                <div>
+                    <span class="hub-permissions-kicker">РОЛИ И РАЗРЕШЕНИЯ</span>
+                    <h2>Матрица доступа</h2>
+                </div>
+                <span class="hub-permissions-count">@Model.Permissions.Count разрешений</span>
+            </div>
+
+            <div class="hub-permissions-table-wrap">
+                <table class="hub-permissions-table">
+                    <thead>
+                        <tr>
+                            <th>Разрешение</th>
+                            @foreach (var role in Model.Roles)
+                            {
+                                <th class="hub-permissions-role-head">
+                                    <i class="fas @roleIcons[role]"></i>
+                                    <span>@roleNames[role]</span>
+                                </th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var category in Model.Permissions.GroupBy(x => x.Category))
+                        {
+                            <tr class="hub-permissions-category-row">
+                                <td colspan="@(Model.Roles.Count + 1)">@category.Key</td>
+                            </tr>
+
+                            @foreach (var permission in category)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@permission.Name</strong>
+                                        <small>@permission.Code</small>
+                                    </td>
+                                    @foreach (var role in Model.Roles)
+                                    {
+                                        var checkedState = permission.Granted.TryGetValue(role, out var granted) && granted;
+                                        <td class="hub-permissions-check-cell">
+                                            <label class="hub-permissions-check">
+                                                <input type="checkbox"
+                                                       name="selectedPermissions[@role]"
+                                                       value="@permission.Id"
+                                                       @(checkedState ? "checked" : null) />
+                                                <span></span>
+                                            </label>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="hub-permissions-actions">
+            <p><i class="fas fa-circle-info"></i> Изменения применятся к новым запросам сотрудников после сохранения.</p>
+            <div>
+                <a asp-action="Index" class="hub-permissions-secondary-action">Отмена</a>
+                <button type="submit" class="hub-permissions-primary-action">
+                    <i class="fas fa-floppy-disk"></i>
+                    Сохранить права
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <aside class="hub-permissions-note">
+        <i class="fas fa-shield-halved"></i>
+        <div>
+            <strong>Административный доступ</strong>
+            <span>Эта страница доступна только администраторам. Само право управления разрешениями не настраивается здесь, чтобы сотрудник не мог выдать себе административный доступ.</span>
+        </div>
+    </aside>
+</div>

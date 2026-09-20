@@ -1,0 +1,150 @@
+@model ContractorHub.Models.Deal
+@using ContractorHub.Services
+@using ContractorHub.Models
+@{
+    ViewData["Title"] = $"Сделка {Model.DealNumber}";
+    var canManage = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.DealsManage)).Succeeded;
+    var history = ViewBag.History as List<DealHistory> ?? new List<DealHistory>();
+    var statuses = ViewBag.Statuses as string[] ?? Array.Empty<string>();
+}
+
+<div class="deal-details-page">
+    <section class="deal-details-header">
+        <div>
+            <div class="deal-details-eyebrow">СДЕЛКИ / ДЕТАЛИ</div>
+            <div class="deal-details-title-row">
+                <h1>@Model.DealNumber</h1>
+                <span class="deal-details-status">@Model.Status</span>
+            </div>
+            <p>@(Model.Client?.Name ?? "Клиент не указан") · @Model.Amount.ToString("N2") ₽</p>
+        </div>
+        <div class="deal-details-header-actions">
+            <a asp-action="Index" class="deal-details-back"><i class="fas fa-arrow-left"></i> К сделкам</a>
+            @if (canManage)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="deal-details-primary"><i class="fas fa-pen"></i> Изменить</a>
+            }
+        </div>
+    </section>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="hub-notice hub-notice-success"><span class="hub-notice-icon"><i class="fas fa-check"></i></span><span>@TempData["Success"]</span></div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="hub-notice hub-notice-error"><span class="hub-notice-icon"><i class="fas fa-exclamation"></i></span><span>@TempData["Error"]</span></div>
+    }
+
+    <div class="deal-details-layout">
+        <main class="deal-details-main">
+            <section class="deal-details-card">
+                <div class="deal-details-card-header">
+                    <div><span class="deal-details-kicker">01</span><h2>Основная информация</h2><p>Ключевые сведения о сделке и её текущем состоянии.</p></div>
+                    <span class="deal-details-card-icon"><i class="fas fa-handshake"></i></span>
+                </div>
+                <div class="deal-details-info-grid">
+                    <div><span>Клиент</span><strong>@(Model.Client?.Name ?? "Не указан")</strong></div>
+                    <div><span>Ответственный</span><strong>@(Model.ResponsibleUser?.FullName ?? "Не назначен")</strong></div>
+                    <div><span>Сумма сделки</span><strong>@Model.Amount.ToString("N2") ₽</strong></div>
+                    <div><span>Создана</span><strong>@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</strong></div>
+                    <div><span>Закрыта</span><strong>@(Model.ClosedAt.HasValue ? Model.ClosedAt.Value.ToLocalTime().ToString("dd.MM.yyyy") : "—")</strong></div>
+                    <div><span>Текущий этап</span><strong>@Model.Status</strong></div>
+                    <div><span>Следующее действие</span><strong>@(string.IsNullOrWhiteSpace(Model.NextAction) ? "Не назначено" : Model.NextAction)</strong></div>
+                    <div><span>Срок действия</span><strong>@(Model.NextActionAt.HasValue ? Model.NextActionAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm") : "—")</strong></div>
+                </div>
+            </section>
+
+            <section class="deal-details-card">
+                <div class="deal-details-card-header">
+                    <div><span class="deal-details-kicker">02</span><h2>Документы</h2><p>Коммерческое предложение и договор, связанные с этой сделкой.</p></div>
+                    <span class="deal-details-card-icon"><i class="fas fa-file-lines"></i></span>
+                </div>
+                <div class="deal-details-documents">
+                    <div class="deal-details-document">
+                        <div class="deal-details-document-icon"><i class="fas fa-file-lines"></i></div>
+                        <div class="deal-details-document-content"><span>КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ</span><strong>@(Model.CommercialOffer?.OfferNumber ?? "Не создано")</strong><small>@(Model.CommercialOffer == null ? "К сделке ещё не привязано КП" : $"{Model.CommercialOffer.TotalAmount:N2} ₽ · {Model.CommercialOffer.Status}")</small></div>
+                        @if (Model.CommercialOffer != null) { <a asp-controller="CommercialOffers" asp-action="Edit" asp-route-id="@Model.CommercialOffer.Id" class="deal-details-document-link">Открыть <i class="fas fa-arrow-up-right-from-square"></i></a> }
+                    </div>
+                    <div class="deal-details-document">
+                        <div class="deal-details-document-icon"><i class="fas fa-file-signature"></i></div>
+                        <div class="deal-details-document-content"><span>ДОГОВОР</span><strong>@(Model.Contract?.ContractNumber ?? "Не создан")</strong><small>@(Model.Contract == null ? "К сделке ещё не привязан договор" : $"{Model.Contract.TotalAmount:N2} ₽ · {Model.Contract.Status}")</small></div>
+                        @if (Model.Contract != null) { <a asp-controller="Contracts" asp-action="Index" class="deal-details-document-link">Открыть <i class="fas fa-arrow-up-right-from-square"></i></a> }
+                    </div>
+                </div>
+                @if (canManage)
+                {
+                    <div class="deal-details-actions">
+                        @if (Model.CommercialOffer == null)
+                        {
+                            <form asp-action="CreateOffer" method="post"><input type="hidden" name="id" value="@Model.Id" /><button type="submit" class="deal-details-secondary"><i class="fas fa-file-circle-plus"></i> Создать КП</button></form>
+                        }
+                        @if (Model.CommercialOffer != null && Model.Contract == null)
+                        {
+                            <form asp-action="CreateContract" method="post"><input type="hidden" name="id" value="@Model.Id" /><button type="submit" class="deal-details-secondary"><i class="fas fa-file-signature"></i> Создать договор</button></form>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="deal-details-card">
+                <div class="deal-details-card-header">
+                    <div><span class="deal-details-kicker">03</span><h2>История сделки</h2><p>Все переходы между этапами с датой, ответственным и комментарием.</p></div>
+                    <span class="deal-details-card-icon"><i class="fas fa-clock-rotate-left"></i></span>
+                </div>
+                @if (history.Count == 0)
+                {
+                    <div class="deal-details-empty"><i class="fas fa-clock-rotate-left"></i><strong>История пока пуста</strong><span>Изменения этапов появятся здесь.</span></div>
+                }
+                else
+                {
+                    <div class="deal-details-history">
+                        @foreach (var item in history)
+                        {
+                            <div class="deal-details-history-item">
+                                <span class="deal-details-history-marker"></span>
+                                <div><strong>@item.ToStatus</strong><span>@item.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm") · @(item.ChangedByUser?.FullName ?? "Система")</span>@if (!string.IsNullOrWhiteSpace(item.Comment)) { <p>@item.Comment</p> }</div>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+        </main>
+
+        <aside class="deal-details-sidebar">
+            <section class="deal-details-card deal-details-stage-card">
+                <div class="deal-details-sidebar-title">Текущий этап</div>
+                <div class="deal-details-stage-value"><span></span><strong>@Model.Status</strong></div>
+                @if (canManage)
+                {
+                    <form asp-action="ChangeStatus" method="post" class="deal-details-stage-form">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <label>Перевести на этап</label>
+                        <select name="status" class="deal-details-input">
+                            @foreach (var status in statuses)
+                            {
+                                if (status == Model.Status) { <option value="@status" selected>@status</option> }
+                                else { <option value="@status">@status</option> }
+                            }
+                        </select>
+                        <input name="comment" class="deal-details-input" placeholder="Комментарий (необязательно)" />
+                        <button type="submit" class="deal-details-primary"><i class="fas fa-arrow-right"></i> Сохранить этап</button>
+                    </form>
+                }
+            </section>
+
+            <section class="deal-details-card deal-details-summary-card">
+                <div class="deal-details-sidebar-title">Сводка</div>
+                <dl>
+                    <div><dt>Клиент</dt><dd>@(Model.Client?.Name ?? "—")</dd></div>
+                    <div><dt>Ответственный</dt><dd>@(Model.ResponsibleUser?.FullName ?? "—")</dd></div>
+                    <div><dt>Сумма</dt><dd>@Model.Amount.ToString("N2") ₽</dd></div>
+                    <div><dt>Следующее действие</dt><dd>@(Model.NextAction ?? "—")</dd></div>
+                    <div><dt>Срок</dt><dd>@(Model.NextActionAt.HasValue ? Model.NextActionAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm") : "—")</dd></div>
+                    <div><dt>Создана</dt><dd>@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</dd></div>
+                    <div><dt>Закрыта</dt><dd>@(Model.ClosedAt.HasValue ? Model.ClosedAt.Value.ToLocalTime().ToString("dd.MM.yyyy") : "—")</dd></div>
+                </dl>
+            </section>
+        </aside>
+    </div>
+</div>

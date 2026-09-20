@@ -1,0 +1,173 @@
+@model IEnumerable<ContractorHub.Models.Deal>
+@using ContractorHub.Services
+
+@{
+    ViewData["Title"] = "Сделки";
+    var deals = Model?.ToList() ?? new List<ContractorHub.Models.Deal>();
+    var searchString = ViewContext.HttpContext.Request.Query["searchString"].ToString();
+    bool canManageDeals = (await AuthorizationService.AuthorizeAsync(User, PermissionPolicies.DealsManage)).Succeeded;
+}
+
+<div class="deals-page">
+    <section class="deals-header">
+        <div>
+            <div class="deals-eyebrow">СДЕЛКИ / ПРОДАЖИ</div>
+            <div class="deals-title-row">
+                <h1>Сделки</h1>
+                <span class="deals-count-badge">@deals.Count</span>
+            </div>
+            <p>Единый реестр работы с клиентами, коммерческими предложениями и договорами.</p>
+        </div>
+
+        @if (canManageDeals)
+        {
+            <a asp-action="Create" class="deals-create-button">
+                <i class="fas fa-plus"></i>
+                <span>Новая сделка</span>
+            </a>
+        }
+    </section>
+
+    <section class="deals-toolbar">
+        <form method="get" asp-action="Index" class="deals-search-form">
+            <div class="deals-search">
+                <i class="fas fa-magnifying-glass"></i>
+                <input type="text" name="searchString" value="@searchString" placeholder="Поиск по номеру сделки или клиенту..." autocomplete="off" />
+                @if (!string.IsNullOrWhiteSpace(searchString))
+                {
+                    <a asp-action="Index" class="deals-search-clear" title="Очистить поиск"><i class="fas fa-xmark"></i></a>
+                }
+            </div>
+            <button type="submit" class="deals-search-button">Найти</button>
+            @if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                <a asp-action="Index" class="deals-reset-button">Сбросить</a>
+            }
+        </form>
+        <div class="deals-toolbar-meta">
+            @if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                <span>Результаты поиска: <strong>@deals.Count</strong></span>
+            }
+            else
+            {
+                <span>Всего: <strong>@deals.Count</strong></span>
+            }
+        </div>
+    </section>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="hub-notice hub-notice-success">
+            <span class="hub-notice-icon"><i class="fas fa-check"></i></span>
+            <span>@TempData["Success"]</span>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="hub-notice hub-notice-error">
+            <span class="hub-notice-icon"><i class="fas fa-exclamation"></i></span>
+            <span>@TempData["Error"]</span>
+        </div>
+    }
+
+    @if (deals.Any())
+    {
+        <section class="deals-table-card">
+            <div class="deals-table-wrapper">
+                <table class="deals-table">
+                    <thead>
+                        <tr>
+                            <th>Сделка</th>
+                            <th>Клиент</th>
+                            <th>Ответственный</th>
+                            <th>Сумма</th>
+                            <th>Статус</th>
+                            <th>Документы</th>
+                            <th>Следующее действие</th>
+                            @if (canManageDeals) { <th class="deals-actions-column"></th> }
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var deal in deals)
+                    {
+                        var statusClass = deal.Status switch
+                        {
+                            "Новая" => "deal-status-new",
+                            "В работе" => "deal-status-work",
+                            "На согласовании" => "deal-status-review",
+                            "Успешна" => "deal-status-success",
+                            "Закрыта" => "deal-status-closed",
+                            "Отменена" => "deal-status-cancelled",
+                            _ => "deal-status-default"
+                        };
+                        <tr>
+                            <td>
+                                <div class="deal-number-cell">
+                                    <span class="deal-document-icon"><i class="fas fa-handshake"></i></span>
+                                    <div><strong>@deal.DealNumber</strong><span>@deal.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="deal-client-cell">
+                                    <strong>@(deal.Client?.Name ?? "Клиент не указан")</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="deal-user-cell">
+                                    <strong>@(deal.ResponsibleUser?.FullName ?? "Не назначен")</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="deal-total-cell">
+                                    <strong>@deal.Amount.ToString("N2") <span>₽</span></strong>
+                                </div>
+                            </td>
+                            <td><span class="deal-status @statusClass"><span></span>@deal.Status</span></td>
+                            <td>
+                                <div class="deal-documents-cell">
+                                    <span><i class="fas fa-file-lines"></i> @(deal.CommercialOffer?.OfferNumber ?? "Без КП")</span>
+                                    <span><i class="fas fa-file-signature"></i> @(deal.Contract?.ContractNumber ?? "Без договора")</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="deal-next-action-cell">
+                                    <strong>@(deal.NextAction ?? "Не назначено")</strong>
+                                    @if (deal.NextActionAt.HasValue)
+                                    {
+                                        <span><i class="fas fa-calendar-day"></i> @deal.NextActionAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                                    }
+                                </div>
+                            </td>
+                            @if (canManageDeals)
+                            {
+                                <td>
+                                    <div class="deals-actions">
+                                        <a asp-action="Details" asp-route-id="@deal.Id" class="deal-row-link" title="Открыть сделку"><i class="fas fa-arrow-up-right-from-square"></i></a>
+                                <a asp-action="Edit" asp-route-id="@deal.Id" class="deal-action-button" title="Изменить"><i class="fas fa-pen"></i></a>
+                                        <form asp-action="Delete" asp-route-id="@deal.Id" method="post" class="d-inline">
+                                            <button type="submit" class="deal-action-button deal-action-delete" title="Удалить" onclick="return confirm('Удалить сделку?')"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            }
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+    else
+    {
+        <section class="deals-empty">
+            <div class="deals-empty-icon"><i class="fas fa-handshake"></i></div>
+            <h2>@(string.IsNullOrWhiteSpace(searchString) ? "Сделок пока нет" : "Ничего не найдено")</h2>
+            <p>@(string.IsNullOrWhiteSpace(searchString) ? "Создайте первую сделку, чтобы связать клиента, КП и договор в одном рабочем процессе." : "Попробуйте изменить поисковый запрос.")</p>
+            @if (canManageDeals && string.IsNullOrWhiteSpace(searchString))
+            {
+                <a asp-action="Create" class="deals-create-button"><i class="fas fa-plus"></i> Новая сделка</a>
+            }
+        </section>
+    }
+</div>

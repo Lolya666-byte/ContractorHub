@@ -10,6 +10,13 @@ var offerLabels = ViewBag.OfferLabels ?? new List<string>();
     var contractStatusLabels = ViewBag.ContractStatusLabels ?? new List<string>();
     var contractStatusValues = ViewBag.ContractStatusValues ?? new List<int>();
 
+    var dealStatusLabels = ViewBag.DealStatusLabels ?? new List<string>();
+    var dealStatusValues = ViewBag.DealStatusValues ?? new List<int>();
+
+    bool canViewClients = ViewBag.CanViewClients ?? false;
+    bool canViewOffers = ViewBag.CanViewOffers ?? false;
+    bool canViewContracts = ViewBag.CanViewContracts ?? false;
+    bool canViewDeals = ViewBag.CanViewDeals ?? false;
 }
 
 <div class="dashboard-page">
@@ -25,7 +32,7 @@ var offerLabels = ViewBag.OfferLabels ?? new List<string>();
             <h1>Статистика</h1>
 
             <p>
-                Ключевые показатели, коммерческие предложения и договоры.
+                Ключевые показатели, сделки, коммерческие предложения и договоры.
             </p>
         </div>
 
@@ -42,6 +49,8 @@ var offerLabels = ViewBag.OfferLabels ?? new List<string>();
 
     <section class="dashboard-kpis">
 
+        @if (canViewOffers)
+        {
         <article class="dashboard-kpi">
 
             <div class="dashboard-kpi-top">
@@ -67,8 +76,11 @@ var offerLabels = ViewBag.OfferLabels ?? new List<string>();
             </div>
 
         </article>
+        }
 
 
+        @if (canViewOffers)
+        {
         <article class="dashboard-kpi">
 
             <div class="dashboard-kpi-top">
@@ -95,8 +107,72 @@ var offerLabels = ViewBag.OfferLabels ?? new List<string>();
             </div>
 
         </article>
+        }
 
 
+        @if (canViewDeals)
+        {
+        <article class="dashboard-kpi">
+
+            <div class="dashboard-kpi-top">
+                <span class="dashboard-kpi-label">
+                    СДЕЛКИ
+                </span>
+
+                <div class="dashboard-kpi-icon dashboard-kpi-icon-blue">
+                    <i class="fas fa-handshake"></i>
+                </div>
+            </div>
+
+            <strong class="dashboard-kpi-value">
+                @ViewBag.TotalDeals
+            </strong>
+
+            <div class="dashboard-kpi-footer">
+                <span>Всего сделок</span>
+
+                <strong>
+                    @ViewBag.ActiveDeals активных
+                </strong>
+            </div>
+
+        </article>
+        }
+
+
+        @if (canViewDeals)
+        {
+        <article class="dashboard-kpi dashboard-kpi-featured">
+
+            <div class="dashboard-kpi-top">
+                <span class="dashboard-kpi-label">
+                    АКТИВНЫЕ СДЕЛКИ
+                </span>
+
+                <div class="dashboard-kpi-icon dashboard-kpi-icon-terracotta">
+                    <i class="fas fa-coins"></i>
+                </div>
+            </div>
+
+            <strong class="dashboard-kpi-value dashboard-kpi-value-money">
+                @(((decimal)ViewBag.ActiveDealAmount).ToString("N0"))
+                <small>₽</small>
+            </strong>
+
+            <div class="dashboard-kpi-footer">
+                <span>В работе</span>
+
+                <strong>
+                    @(((decimal)ViewBag.SuccessfulDealAmount).ToString("N0")) ₽ успешно
+                </strong>
+            </div>
+
+        </article>
+        }
+
+
+        @if (canViewContracts)
+        {
         <article class="dashboard-kpi">
 
             <div class="dashboard-kpi-top">
@@ -122,8 +198,11 @@ var offerLabels = ViewBag.OfferLabels ?? new List<string>();
             </div>
 
         </article>
+        }
 
 
+        @if (canViewContracts)
+        {
         <article class="dashboard-kpi dashboard-kpi-featured">
 
             <div class="dashboard-kpi-top">
@@ -150,6 +229,7 @@ var offerLabels = ViewBag.OfferLabels ?? new List<string>();
             </div>
 
         </article>
+        }
 
     </section>
 
@@ -157,6 +237,8 @@ var offerLabels = ViewBag.OfferLabels ?? new List<string>();
 
     <section class="dashboard-grid dashboard-grid-main">
 
+        @if (canViewOffers)
+        {
         <article class="dashboard-card dashboard-card-large">
 
             <header class="dashboard-card-header">
@@ -184,8 +266,11 @@ var offerLabels = ViewBag.OfferLabels ?? new List<string>();
             </div>
 
         </article>
+        }
 
 
+        @if (canViewClients && canViewContracts)
+        {
         <article class="dashboard-card dashboard-card-side">
 
             <header class="dashboard-card-header">
@@ -213,12 +298,42 @@ var offerLabels = ViewBag.OfferLabels ?? new List<string>();
             </div>
 
         </article>
+        }
 
     </section>
 
 
     <section class="dashboard-grid dashboard-grid-bottom">
 
+        @if (canViewDeals)
+        {
+        <article class="dashboard-card dashboard-card-large">
+
+            <header class="dashboard-card-header">
+                <div>
+                    <span class="dashboard-card-kicker">
+                        СДЕЛКИ
+                    </span>
+                    <h2>Воронка сделок</h2>
+                    <p>
+                        Распределение сделок по текущим этапам.
+                    </p>
+                </div>
+
+                <div class="dashboard-card-icon">
+                    <i class="fas fa-filter-circle-dollar"></i>
+                </div>
+            </header>
+
+            <div class="dashboard-chart dashboard-chart-main">
+                <canvas id="dealsChart"></canvas>
+            </div>
+
+        </article>
+        }
+
+        @if (canViewContracts)
+        {
         <article class="dashboard-card">
 
             <header class="dashboard-card-header">
@@ -314,8 +429,11 @@ var offerLabels = ViewBag.OfferLabels ?? new List<string>();
             </div>
 
         </article>
+        }
 
 
+        @if (canViewOffers || canViewContracts)
+        {
         <article class="dashboard-card">
 
             <header class="dashboard-card-header">
@@ -340,6 +458,8 @@ var offerLabels = ViewBag.OfferLabels ?? new List<string>();
 
             <div class="dashboard-finance">
 
+                @if (canViewOffers)
+                {
                 <div class="dashboard-finance-row">
 
                     <div>
@@ -358,11 +478,15 @@ var offerLabels = ViewBag.OfferLabels ?? new List<string>();
                     </div>
 
                 </div>
+                }
 
-
+                @if (canViewOffers && canViewContracts)
+                {
                 <div class="dashboard-finance-divider"></div>
+                }
 
-
+                @if (canViewContracts)
+                {
                 <div class="dashboard-finance-row">
 
                     <div>
@@ -381,10 +505,12 @@ var offerLabels = ViewBag.OfferLabels ?? new List<string>();
                     </div>
 
                 </div>
+                }
 
             </div>
 
         </article>
+        }
 
     </section>
 
@@ -407,6 +533,61 @@ var offerLabels = ViewBag.OfferLabels ?? new List<string>();
 
         const clientTotals =
             @Html.Raw(Json.Serialize(clientTotals));
+
+        const dealStatusLabels =
+            @Html.Raw(Json.Serialize(dealStatusLabels));
+
+        const dealStatusValues =
+            @Html.Raw(Json.Serialize(dealStatusValues));
+
+
+        const dealsCanvas =
+            document.getElementById('dealsChart');
+
+        if (dealsCanvas) {
+            new Chart(dealsCanvas, {
+                type: 'bar',
+                data: {
+                    labels: dealStatusLabels,
+                    datasets: [{
+                        data: dealStatusValues,
+                        backgroundColor: 'rgba(184, 92, 58, 0.72)',
+                        borderWidth: 0,
+                        borderRadius: 4,
+                        maxBarThickness: 42
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { displayColors: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0,
+                                color: '#8a8a92',
+                                font: { family: 'Inter', size: 10 }
+                            },
+                            grid: { color: 'rgba(26, 26, 30, 0.06)' },
+                            border: { display: false }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#8a8a92',
+                                font: { family: 'Inter', size: 10 }
+                            },
+                            grid: { display: false },
+                            border: { display: false }
+                        }
+                    }
+                }
+            });
+        }
 
 
         const offersCanvas =
